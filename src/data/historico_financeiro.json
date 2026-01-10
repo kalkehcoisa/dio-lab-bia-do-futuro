@@ -1,0 +1,10 @@
+{
+  "transacoes": [
+    {
+      "data": "2025-12-05",
+      "descricao": "Salário",
+      "valor": 5000.00,
+      "categoria": "Renda"
+    }
+  ]
+}

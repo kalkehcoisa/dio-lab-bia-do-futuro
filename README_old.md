@@ -1,123 +1,33 @@
-# 🤖 Assessor Financeiro Pessoal com IA
+# 🤖 Agente Financeiro Inteligente com IA Generativa
 
-## 📌 Visão Geral do Projeto
+## Contexto
 
-Este projeto apresenta um **Assessor Financeiro Pessoal Conversacional**, uma experiência digital guiada por **IA generativa**, focada em **educação financeira**, **simulações simples** e **boas práticas de relacionamento com o usuário**.
+Os assistentes virtuais no setor financeiro estão evoluindo de simples chatbots reativos para **agentes inteligentes e proativos**. Neste desafio, você vai idealizar e prototipar um agente financeiro que utiliza IA Generativa para:
 
-A solução foi concebida para demonstrar a aplicação prática de conceitos de **inteligência artificial**, **Python**, **processamento de linguagem natural**, **modelagem de dados simples** e **experiência do usuário (UX)**, conforme proposto no desafio.
+- **Antecipar necessidades** ao invés de apenas responder perguntas
+- **Personalizar** sugestões com base no contexto de cada cliente
+- **Cocriar soluções** financeiras de forma consultiva
+- **Garantir segurança** e confiabilidade nas respostas (anti-alucinação)
 
-O assistente interage em linguagem natural, mantém contexto durante a conversa e oferece respostas claras, seguras e personalizadas, sempre com caráter educativo e demonstrativo.
-
----
-
-## 🎯 Objetivo
-
-Criar um agente conversacional que atue como um **assessor financeiro pessoal**, capaz de:
-
-* Compreender perguntas em linguagem natural
-* Manter um perfil financeiro simples do usuário ao longo da conversa
-* Realizar simulações financeiras básicas usando Python
-* Explicar conceitos e produtos financeiros de forma acessível
-* Aplicar boas práticas de UX e comunicação responsável
-
-A proposta **não é fornecer aconselhamento financeiro definitivo**, mas sim ajudar o usuário a entender cenários, conceitos e possíveis impactos financeiros.
+> [!TIP]
+> Na pasta [`examples/`](./examples/) você encontra referências de implementação para cada etapa deste desafio.
 
 ---
 
-## 🧠 Funcionalidades Principais
+## O Que Você Deve Entregar
 
-### 💬 Conversa em Linguagem Natural
+### 1. Documentação do Agente
 
-O usuário pode interagir livremente com o assistente, fazendo perguntas como:
+Defina **o que** seu agente faz e **como** ele funciona:
 
-* “Consigo parcelar uma compra de R$ 3.000?”
-* “Vale mais pagar à vista ou parcelar?”
-* “Como funcionam os juros do cartão de crédito?”
+- **Caso de Uso:** Qual problema financeiro ele resolve? (ex: consultoria de investimentos, planejamento de metas, alertas de gastos)
+- **Persona e Tom de Voz:** Como o agente se comporta e se comunica?
+- **Arquitetura:** Fluxo de dados e integração com a base de conhecimento
+- **Segurança:** Como evitar alucinações e garantir respostas confiáveis?
 
-A IA interpreta a intenção antes de responder, oferecendo explicações contextualizadas.
-
----
-
-### 👤 Perfil Financeiro Simples
-
-Durante a conversa, o assistente pode armazenar informações como:
-
-* renda mensal (opcional)
-* objetivos financeiros
-* valores mencionados anteriormente
-
-Esse contexto é utilizado para tornar as respostas mais coerentes e personalizadas dentro da sessão.
+📄 **Template:** [`docs/01-documentacao-agente.md`](./docs/01-documentacao-agente.md)
 
 ---
-
-### 🧮 Simulações Financeiras Educativas
-
-A solução realiza cálculos reais em Python para:
-
-* parcelamento com juros simples
-* comparação entre pagamento à vista e parcelado
-* projeções financeiras básicas
-
-Os resultados são sempre explicados de forma transparente, mostrando como o cálculo foi feito.
-
----
-
-### 📚 Educação Financeira e Explicação de Produtos
-
-O assistente explica conceitos e produtos financeiros comuns, como:
-
-* cartão de crédito
-* empréstimo pessoal
-* juros e parcelamentos
-
-As respostas priorizam clareza, linguagem simples e exemplos práticos.
-
----
-
-### 🔐 Boas Práticas de UX e Segurança
-
-* Linguagem acessível e não técnica
-* Avisos claros de que se trata de simulações educativas
-* Nenhuma solicitação de dados sensíveis
-* Nenhuma recomendação financeira definitiva
-
----
-
-## 🚫 Fora do Escopo
-
-Para manter o foco e a segurança da solução, não fazem parte deste projeto:
-
-* integração com APIs bancárias reais
-* investimentos ou recomendação de ativos
-* autenticação de usuários
-* armazenamento persistente de dados sensíveis
-
----
-
-## 🛠 Tecnologias Utilizadas
-
-* **Python**
-* **IA Generativa (LLM)**
-* **Processamento de Linguagem Natural**
-* **Lógica de simulação financeira**
-* **Interface conversacional simples**
-
----
-
-## ✅ Resultado Esperado
-
-Ao utilizar a aplicação, o usuário consegue:
-
-* conversar naturalmente com o assistente
-* receber explicações claras e contextualizadas
-* simular cenários financeiros simples
-* perceber a integração prática entre IA, Python, dados e UX
-
----
-
-📄 **Documentação do agente:** [`docs/01-documentacao-agente.md`](./docs/01-documentacao-agente.md)
-
-
 
 ### 2. Base de Conhecimento
 
@@ -132,7 +42,7 @@ Utilize os **dados mockados** disponíveis na pasta [`data/`](./data/) para alim
 
 Você pode adaptar ou expandir esses dados conforme seu caso de uso.
 
-📄 **Base de Conhecimento:** [`docs/02-base-conhecimento.md`](./docs/02-base-conhecimento.md)
+📄 **Template:** [`docs/02-base-conhecimento.md`](./docs/02-base-conhecimento.md)
 
 ---
 
