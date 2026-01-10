@@ -11,4 +11,10 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements-dev.txt
 
-pytest .
+if [ -z "$1" ]; then
+    # Sem parâmetro: roda todos os testes
+    pytest -v
+else
+    # Com parâmetro: roda teste específico
+    pytest -v "$1"
+fi

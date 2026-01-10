@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-01-10T17:50:25.963563",
+  "mensagem": "sim",
+  "resposta": "Dados confirmados",
+  "dados_extraidos": {
+    "renda_mensal": 8500.0,
+    "idade": 35
+  }
+}

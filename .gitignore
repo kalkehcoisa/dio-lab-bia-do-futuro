@@ -1,3 +1,9 @@
 .venv/
 __pycache__/
+htmlcov/
+
 *.py[oc]
+
+.coverage
+coverage.xml
+sync_tar.sh

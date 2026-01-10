@@ -38,12 +38,12 @@ def chat_handler(mensagem, historico, usuario, pendente_confirmacao):
             resposta_llm = llm.gerar_resposta(mensagem, fatos)
 
             historico.append(
-                (mensagem, "✅ Dados confirmados e salvos.\n\n" + data.resumo_usuario(usuario))
+                (mensagem, "Dados confirmados e salvos.\n\n" + data.resumo_usuario(usuario))
             )
         else:
             pendente_confirmacao = None
             historico.append(
-                (mensagem, "❌ Ok, não salvei nenhuma informação.")
+                (mensagem, "Ok, não salvei nenhuma informação.")
             )
         return historico, usuario, pendente_confirmacao
 
@@ -53,7 +53,7 @@ def chat_handler(mensagem, historico, usuario, pendente_confirmacao):
     if novos_dados:
         valido, erro = validation.validar_resposta(novos_dados, mensagem_original=mensagem)
         if not valido:
-            historico.append((mensagem, f"⚠️ {erro}"))
+            historico.append((mensagem, f"{erro}"))
             return historico, usuario, pendente_confirmacao
 
         pendente_confirmacao = novos_dados
@@ -73,7 +73,7 @@ def chat_handler(mensagem, historico, usuario, pendente_confirmacao):
 
 # Interface Gradio
 with gr.Blocks(title="Assessor Financeiro Pessoal") as app:
-    gr.Markdown("# 💰 Assessor Financeiro Pessoal")
+    gr.Markdown("#Assessor Financeiro Pessoal")
     gr.Markdown(
         "O agente identifica novos dados, valida e atualiza seu perfil com segurança."
     )

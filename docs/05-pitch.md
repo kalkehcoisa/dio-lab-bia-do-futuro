@@ -2,7 +2,7 @@
 
 > [!TIP]
 > Você pode usar alguns slides pra apoiar no seu Pitch e mostrar sua solução na prática.
- 
+
 ## Roteiro Sugerido
 
 ### 1. O Problema (30 seg)
