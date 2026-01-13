@@ -3,36 +3,16 @@ Testes para módulo LLM
 """
 import pytest
 
-from app.llm import LLMManager, MockLLMProvider, OllamaProvider
+from app.llm import LLMManager, OllamaProvider
 from app.exceptions import LLMError
-
-
-class TestMockLLMProvider:
-    """Testes para MockLLMProvider"""
-
-    def test_gerar_resposta(self):
-        """Testa geração de resposta mockada"""
-        provider = MockLLMProvider(response="Teste resposta")
-        resposta = provider.gerar_resposta("prompt teste")
-
-        assert resposta == "Teste resposta"
-        assert provider.last_prompt == "prompt teste"
-
-    def test_armazena_ultimo_prompt(self):
-        """Testa que último prompt é armazenado"""
-        provider = MockLLMProvider()
-        provider.gerar_resposta("primeiro")
-        provider.gerar_resposta("segundo")
-
-        assert provider.last_prompt == "segundo"
 
 
 class TestLLMManager:
     """Testes para LLMManager"""
 
-    def test_inicializacao_com_provider(self):
+    def test_inicializacao_com_provider(self, mock_llm_provider_cls):
         """Testa inicialização com provider customizado"""
-        provider = MockLLMProvider("Teste")
+        provider = mock_llm_provider_cls("Teste")
         manager = LLMManager(provider=provider)
 
         assert manager.provider == provider

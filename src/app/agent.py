@@ -3,12 +3,12 @@ Lógica principal do agente financeiro
 """
 from typing import Dict, Any, Tuple, Optional, List
 
-from .config import PALAVRAS_CONFIRMACAO, PALAVRAS_NEGACAO
-from .data import DataManager
-from .extraction import DataExtractor
-from .validation import DataValidator
-from .llm import LLMManager
-from .exceptions import AgentException
+import config
+from data import DataManager
+from extraction import DataExtractor
+from validation import DataValidator
+from llm import LLMManager
+from exceptions import AgentException
 
 
 class FinancialAgent:
@@ -59,7 +59,7 @@ class FinancialAgent:
             True se for confirmação
         """
         texto_lower = texto.lower().strip()
-        return any(palavra in texto_lower for palavra in PALAVRAS_CONFIRMACAO)
+        return any(palavra in texto_lower for palavra in config.PALAVRAS_CONFIRMACAO)
 
     def eh_negacao(self, texto: str) -> bool:
         """
@@ -72,7 +72,7 @@ class FinancialAgent:
             True se for negação
         """
         texto_lower = texto.lower().strip()
-        return any(palavra in texto_lower for palavra in PALAVRAS_NEGACAO)
+        return any(palavra in texto_lower for palavra in config.PALAVRAS_NEGACAO)
 
     def formatar_confirmacao(self, dados: Dict[str, Any]) -> str:
         """

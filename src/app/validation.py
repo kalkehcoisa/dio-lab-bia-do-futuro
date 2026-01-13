@@ -3,25 +3,17 @@ Validação de dados e respostas do agente
 """
 from typing import Tuple, Optional, Dict, Any
 
-from .config import (
-    TERMOS_PROIBIDOS,
-    CAMPOS_SUPORTADOS,
-    PERFIS_VALIDOS,
-    MIN_RENDA_MENSAL,
-    MAX_RENDA_MENSAL,
-    MIN_META_VALOR,
-    MAX_META_VALOR
-)
-from .exceptions import ValidationError
+import config
+from exceptions import ValidationError
 
 
 class DataValidator:
     """Validador de dados do usuário"""
 
     def __init__(self):
-        self.termos_proibidos = TERMOS_PROIBIDOS
-        self.campos_suportados = CAMPOS_SUPORTADOS
-        self.perfis_validos = PERFIS_VALIDOS
+        self.termos_proibidos = config.TERMOS_PROIBIDOS
+        self.campos_suportados = config.CAMPOS_SUPORTADOS
+        self.perfis_validos = config.PERFIS_VALIDOS
 
     def validar_resposta(
         self,
@@ -84,10 +76,10 @@ class DataValidator:
         if not isinstance(renda, (int, float)):
             return False, "A renda mensal deve ser um valor numérico."
 
-        if renda < MIN_RENDA_MENSAL:
+        if renda < config.MIN_RENDA_MENSAL:
             return False, "A renda mensal precisa ser um valor positivo."
 
-        if renda > MAX_RENDA_MENSAL:
+        if renda > config.MAX_RENDA_MENSAL:
             return False, f"O valor informado parece muito alto. Por favor, verifique."
 
         return True, None
@@ -129,10 +121,10 @@ class DataValidator:
                 if not isinstance(valor, (int, float)):
                     return False, f"Valor da meta {i} deve ser numérico."
 
-                if valor < MIN_META_VALOR:
+                if valor < config.MIN_META_VALOR:
                     return False, f"Valor da meta {i} deve ser positivo."
 
-                if valor > MAX_META_VALOR:
+                if valor > config.MAX_META_VALOR:
                     return False, f"Valor da meta {i} parece muito alto."
 
             # Valida prazo se existir

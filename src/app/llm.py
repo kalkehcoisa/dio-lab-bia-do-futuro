@@ -1,83 +1,51 @@
 """
 Integração com Large Language Model
 """
-import subprocess
+
 from typing import Set, Optional
-from abc import ABC, abstractmethod
 
-from .config import LLM_MODEL, LLM_TIMEOUT
-from .exceptions import LLMError
+from groq import Groq, GroqError
+
+import config
+from exceptions import LLMError
 
 
-class LLMProvider(ABC):
-    """Interface abstrata para provedores de LLM"""
-
-    @abstractmethod
+class LLMProvider:
+    """Interface para provedores de LLM"""
     def gerar_resposta(self, prompt: str) -> str:
-        """Gera resposta a partir de um prompt"""
-        pass
+        """Gera resposta baseada no prompt fornecido"""
+        raise NotImplementedError
 
 
-class OllamaProvider(LLMProvider):
-    """Provedor LLM usando Ollama local"""
-
-    def __init__(self, model: str = LLM_MODEL, timeout: int = LLM_TIMEOUT):
+class GroqProvider(LLMProvider):
+    def __init__(self, model=config.GROQ_MODEL_NAME):
+        self.client = Groq(api_key=config.GROQ_API_KEY)
         self.model = model
-        self.timeout = timeout
 
     def gerar_resposta(self, prompt: str) -> str:
-        """
-        Gera resposta usando Ollama.
-
-        Args:
-            prompt: Prompt para o modelo
-
-        Returns:
-            Resposta gerada
-
-        Raises:
-            LLMError: Se houver erro na geração
-        """
         try:
-            result = subprocess.run(
-                ["ollama", "run", self.model],
-                input=prompt,
-                text=True,
-                capture_output=True,
-                timeout=self.timeout
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                timeout=config.GROQ_LLM_TIMEOUT,
             )
+            response = resp.choices[0].message.content.strip()
+            return response
 
-            if result.returncode != 0:
-                raise LLMError(f"Erro ao executar Ollama: {result.stderr}")
-
-            return result.stdout.strip()
-
-        except subprocess.TimeoutExpired:
-            raise LLMError(f"Timeout ao gerar resposta (>{self.timeout}s)")
-        except FileNotFoundError:
-            raise LLMError("Ollama não está instalado ou não está no PATH")
-        except Exception as e:
-            raise LLMError(f"Erro inesperado ao gerar resposta: {e}")
-
-
-class MockLLMProvider(LLMProvider):
-    """Provedor mock para testes"""
-
-    def __init__(self, response: str = "Resposta mockada"):
-        self.response = response
-        self.last_prompt = None
-
-    def gerar_resposta(self, prompt: str) -> str:
-        """Retorna resposta mockada"""
-        self.last_prompt = prompt
-        return self.response
+        except GroqError as e:
+            if "rate limit" in str(e).lower():
+                raise LLMError("Rate limit atingido.")
+            elif "authentication" in str(e).lower():
+                raise LLMError("API key inválida.")
+            else:
+                raise LLMError(f"Erro Groq: {e}")
 
 
 class LLMManager:
     """Gerenciador de interações com LLM"""
 
-    def __init__(self, provider: Optional[LLMProvider] = None):
-        self.provider = provider or OllamaProvider()
+    def __init__(self, provider: LLMProvider = GroqProvider()):
+        self.provider = provider
 
     def gerar_resposta(
         self,
@@ -98,20 +66,13 @@ class LLMManager:
             LLMError: Se houver erro na geração
         """
         prompt = self._construir_prompt(mensagem_usuario, fatos_permitidos)
+        resposta = self.provider.gerar_resposta(prompt)
 
-        try:
-            resposta = self.provider.gerar_resposta(prompt)
+        # Validação básica da resposta
+        if not resposta or len(resposta.strip()) == 0:
+            return self._resposta_padrao()
 
-            # Validação básica da resposta
-            if not resposta or len(resposta.strip()) == 0:
-                return self._resposta_padrao()
-
-            return resposta
-
-        except LLMError:
-            raise
-        except Exception as e:
-            raise LLMError(f"Erro ao gerar resposta: {e}")
+        return resposta
 
     def _construir_prompt(
         self,
@@ -146,6 +107,7 @@ INSTRUÇÕES:
 - Se precisar de mais informações, pergunte ao usuário
 - Não invente dados ou faça suposições
 - Seja útil mas não dê conselhos de investimento específicos
+- Sempre que apresentar um resultado, descreva como ele foi obtido (fórmulas, metodologias, etc)
 
 Responda agora:"""
 

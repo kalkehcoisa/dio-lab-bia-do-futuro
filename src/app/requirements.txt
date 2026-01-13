@@ -1,2 +1,4 @@
+dotenv
 gradio
+groq
 requests

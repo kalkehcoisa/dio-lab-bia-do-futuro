@@ -1,7 +1,11 @@
 .venv/
 __pycache__/
 htmlcov/
+src/app/.venv/
+src/app/.env
+src/app/data/*.json
 src/app/data/interacoes/*.json
+
 
 *.py[oc]
 

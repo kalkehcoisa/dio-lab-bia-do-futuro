@@ -4,16 +4,16 @@ Extração de dados estruturados de texto natural
 import re
 from typing import Dict, Any, Set, Optional, List
 
-from .config import CAMPOS_SUPORTADOS, PERFIS_VALIDOS
-from .exceptions import ExtractionError
+import config
+from exceptions import ExtractionError
 
 
 class DataExtractor:
     """Extrator de dados estruturados de mensagens do usuário"""
 
     def __init__(self):
-        self.campos_suportados = CAMPOS_SUPORTADOS
-        self.perfis_validos = PERFIS_VALIDOS
+        self.campos_suportados = config.CAMPOS_SUPORTADOS
+        self.perfis_validos = config.PERFIS_VALIDOS
 
     def detectar_novos_dados(self, texto: str) -> Dict[str, Any]:
         """

@@ -6,14 +6,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-from .config import USUARIO_FILE, INTERACOES_PATH
-from .exceptions import DataLoadError, DataSaveError
+import config
+from exceptions import DataLoadError, DataSaveError
 
 
 class DataManager:
     """Gerenciador de dados do usuário"""
 
-    def __init__(self, usuario_file: Path = USUARIO_FILE):
+    def __init__(self, usuario_file: Path = config.USUARIO_FILE):
         self.usuario_file = usuario_file
 
     def carregar_usuario(self) -> Dict[str, Any]:
@@ -210,7 +210,7 @@ class DataManager:
         try:
             timestamp = datetime.now()
             filename = f"{timestamp.strftime('%Y-%m-%d_%H%M%S')}.json"
-            filepath = INTERACOES_PATH / filename
+            filepath = config.INTERACOES_PATH / filename
 
             interacao = {
                 "timestamp": timestamp.isoformat(),

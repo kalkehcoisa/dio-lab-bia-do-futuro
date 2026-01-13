@@ -71,8 +71,11 @@ PALAVRAS_NEGACAO: Set[str] = {
 }
 
 # LLM Configuration
-LLM_MODEL = os.getenv("LLM_MODEL", "phi3")
-LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "30"))
+LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "60"))
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL_NAME = os.getenv("GROQ_MODEL_NAME", "llama-3.3-70b-versatile")
+GROQ_LLM_TIMEOUT = int(os.getenv("GROQ_LLM_TIMEOUT", LLM_TIMEOUT))
 
 # Validação de valores
 MIN_RENDA_MENSAL = 0.01

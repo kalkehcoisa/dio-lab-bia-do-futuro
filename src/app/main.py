@@ -1,96 +1,71 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import gradio as gr
 
-import data
-import extraction
-import llm
-import validation
+from data import DataManager
+from extraction import DataExtractor
+from llm import LLMManager
+from validation import DataValidator
 
 
-# Estado inicial
-usuario = gr.State(data.carregar_usuario())
-pendente_confirmacao = gr.State(None)
+data_manager = DataManager()
+data_extractor = DataExtractor()
+data_validator = DataValidator()
+llm_manager = LLMManager()
 
 
-def eh_confirmacao(texto: str) -> bool:
-    texto = texto.lower().strip()
-    return texto in {"sim", "confirmo", "ok", "pode salvar", "pode"}
-
-
-def formatar_confirmacao(dados: dict) -> str:
-    linhas = ["Identifiquei as seguintes informações:"]
-    for k, v in dados.items():
-        linhas.append(f"- {k}: {v}")
-    linhas.append("\nPosso salvar isso? (sim / não)")
-    return "\n".join(linhas)
-
-
-# Lógica principal
-def chat_handler(mensagem, historico, usuario, pendente_confirmacao):
-    # 1. Se há confirmação pendente
-    if pendente_confirmacao:
-        if eh_confirmacao(mensagem):
-            novos_dados = pendente_confirmacao
-            usuario = data.aplicar_atualizacoes(usuario, novos_dados)
-            data.salvar_usuario(usuario)
-            pendente_confirmacao = None
-
-            fatos = extraction.extrair_fatos_permitidos(usuario)
-            resposta_llm = llm.gerar_resposta(mensagem, fatos)
-
-            historico.append(
-                (mensagem, "Dados confirmados e salvos.\n\n" + data.resumo_usuario(usuario))
-            )
-        else:
-            pendente_confirmacao = None
-            historico.append(
-                (mensagem, "Ok, não salvei nenhuma informação.")
-            )
-        return historico, usuario, pendente_confirmacao
-
+def chat_handler(message, history, historico, usuario):
     # 2. Detectar novos dados
-    novos_dados = extraction.detectar_novos_dados(mensagem)
+    novos_dados = data_extractor.detectar_novos_dados(message)
 
     if novos_dados:
-        valido, erro = validation.validar_resposta(novos_dados, mensagem_original=mensagem)
+        valido, erro = data_validator.validar_resposta(novos_dados, mensagem_original=message)
         if not valido:
-            historico.append((mensagem, f"{erro}"))
-            return historico, usuario, pendente_confirmacao
-
-        pendente_confirmacao = novos_dados
-        historico.append(
-            (mensagem, formatar_confirmacao(novos_dados))
-        )
-        return historico, usuario, pendente_confirmacao
+            historico.append((message, f"{erro}"))
+        else:
+            historico.append((message, novos_dados))
 
     # 3. Apenas conversa (sem persistência)
-    fatos = extraction.extrair_fatos_permitidos(usuario)
-    resposta_llm = llm.gerar_resposta(mensagem, fatos)
+    fatos = data_extractor.extrair_fatos_permitidos(usuario)
+    resposta_llm = llm_manager.gerar_resposta(message, fatos)
 
-    historico.append((mensagem, resposta_llm))
-    return historico, usuario, pendente_confirmacao
+    historico.append((message, resposta_llm))
+    return resposta_llm
 
 
 
 # Interface Gradio
 with gr.Blocks(title="Assessor Financeiro Pessoal") as app:
-    gr.Markdown("#Assessor Financeiro Pessoal")
-    gr.Markdown(
-        "O agente identifica novos dados, valida e atualiza seu perfil com segurança."
-    )
+    # Estado inicial
+    historico = gr.State([])
+    usuario = gr.State(data_manager.carregar_usuario())
 
-    chatbot = gr.Chatbot(height=400)
+    chatbot = gr.Chatbot(
+        height=400,
+        value=[{
+                "role": "assistant",
+                "content": "Olá! 👋\nSou a BIA, sua assistente financeira.\nComo posso te ajudar hoje?"
+            }]
+    )
     msg = gr.Textbox(
         label="Mensagem",
         placeholder="Ex: minha renda mensal agora é 6500 reais"
     )
-
-    msg.submit(
-        chat_handler,
-        inputs=[msg, chatbot, usuario, pendente_confirmacao],
-        outputs=[chatbot, usuario, pendente_confirmacao]
+    gr.ChatInterface(
+        chatbot=chatbot,
+        title="#Assessor Financeiro Pessoal",
+        description="O agente identifica novos dados, valida e atualiza seu perfil com segurança.",
+        textbox=msg,
+        additional_inputs=[usuario],
+        fn=chat_handler,
+        save_history=True,
     )
 
 
-
 if __name__ == "__main__":
-    app.launch(server_name="0.0.0.0", server_port=7860)
+    app.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        debug=True
+    )

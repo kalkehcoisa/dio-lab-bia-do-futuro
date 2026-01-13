@@ -8,6 +8,19 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+class MockLLMProvider:
+    """Provedor mock para testes"""
+
+    def __init__(self, response: str = "Resposta mockada"):
+        self.response = response
+        self.last_prompt = None
+
+    def gerar_resposta(self, prompt: str) -> str:
+        """Retorna resposta mockada"""
+        self.last_prompt = prompt
+        return self.response
+
+
 @pytest.fixture
 def temp_dir():
     """Cria diretório temporário para testes"""
@@ -48,8 +61,13 @@ def mock_validator():
 @pytest.fixture
 def mock_llm_provider():
     """Fixture para provider LLM mockado"""
-    from app.llm import MockLLMProvider
     return MockLLMProvider(response="Resposta de teste")
+
+
+@pytest.fixture
+def mock_llm_provider_cls():
+    """Fixture para classe de provider LLM mockado"""
+    return MockLLMProvider
 
 
 @pytest.fixture
@@ -77,7 +95,7 @@ def mock_agent(mock_data_manager, mock_extractor, mock_validator, mock_llm_manag
 def mock_agent_malandro(mock_data_manager, mock_extractor, mock_validator):
     """Fixture para FinancialAgent completo"""
     from app.agent import FinancialAgent
-    from app.llm import LLMManager, MockLLMProvider
+    from app.llm import LLMManager
 
     response = ' '.join([
         "invista em bitcoin",
