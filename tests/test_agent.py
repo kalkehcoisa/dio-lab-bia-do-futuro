@@ -76,24 +76,24 @@ class TestFinancialAgent:
         assert "Comprar carro" in mensagem
         assert "30,000" in mensagem or "30.000" in mensagem
 
-    def test_processar_mensagem_sem_dados(self, mock_agent):
+    def test_process_message_sem_dados(self, mock_agent):
         """Testa processamento de mensagem sem dados extraíveis"""
-        resposta, usuario = mock_agent.processar_mensagem("olá, tudo bem?")
+        resposta, usuario = mock_agent.process_message("olá, tudo bem?")
 
         assert resposta is not None
         assert len(resposta) > 0
 
-    def test_processar_mensagem_com_renda(self, mock_agent):
+    def test_process_message_com_renda(self, mock_agent):
         """Testa processamento de mensagem com renda"""
-        resposta, usuario = mock_agent.processar_mensagem("minha renda é 6000 reais")
+        resposta, usuario = mock_agent.process_message("minha renda é 6000 reais")
 
         assert "6,000" in resposta
         assert "confirma" in resposta.lower() or "salvar" in resposta.lower()
         assert mock_agent.pendente_confirmacao is not None
 
-    def test_processar_mensagem_com_perfil(self, mock_agent):
+    def test_process_message_com_perfil(self, mock_agent):
         """Testa processamento de mensagem com perfil"""
-        resposta, usuario = mock_agent.processar_mensagem("sou conservador")
+        resposta, usuario = mock_agent.process_message("sou conservador")
 
         assert "conservador" in resposta.lower()
         assert mock_agent.pendente_confirmacao is not None
@@ -101,11 +101,11 @@ class TestFinancialAgent:
     def test_fluxo_confirmacao_positiva(self, mock_agent):
         """Testa fluxo completo de confirmação positiva"""
         # 1. Enviar dados
-        resposta1, _ = mock_agent.processar_mensagem("minha renda é 7000")
+        resposta1, _ = mock_agent.process_message("minha renda é 7000")
         assert mock_agent.pendente_confirmacao is not None
 
         # 2. Confirmar
-        resposta2, usuario = mock_agent.processar_mensagem("sim")
+        resposta2, usuario = mock_agent.process_message("sim")
         assert "confirmado" in resposta2.lower()
         assert mock_agent.pendente_confirmacao is None
         assert usuario["renda_mensal"] == 7000.0
@@ -113,19 +113,19 @@ class TestFinancialAgent:
     def test_fluxo_confirmacao_negativa(self, mock_agent):
         """Testa fluxo completo de confirmação negativa"""
         # 1. Enviar dados
-        resposta1, usuario_antes = mock_agent.processar_mensagem("minha renda é 7000")
+        resposta1, usuario_antes = mock_agent.process_message("minha renda é 7000")
         assert mock_agent.pendente_confirmacao is not None
         renda_antes = usuario_antes.get("renda_mensal")
 
         # 2. Negar
-        resposta2, usuario_depois = mock_agent.processar_mensagem("não")
+        resposta2, usuario_depois = mock_agent.process_message("não")
         assert "não salvei" in resposta2.lower()
         assert mock_agent.pendente_confirmacao is None
         assert usuario_depois.get("renda_mensal") == renda_antes
 
     def test_processar_multiplos_dados(self, mock_agent):
         """Testa processamento de múltiplos dados"""
-        resposta, usuario = mock_agent.processar_mensagem(
+        resposta, usuario = mock_agent.process_message(
             "tenho 35 anos, ganho 8000 por mês e sou moderado"
         )
 
@@ -135,14 +135,14 @@ class TestFinancialAgent:
 
     def test_processar_dados_invalidos(self, mock_agent):
         """Testa processamento de dados inválidos"""
-        resposta, usuario = mock_agent.processar_mensagem("minha renda é -5000")
+        resposta, usuario = mock_agent.process_message("minha renda é -5000")
 
         assert "precisa ser um valor positivo" in resposta.lower()
         assert mock_agent.pendente_confirmacao is None
 
     def test_processar_termo_proibido(self, mock_agent):
         """Testa processamento com termo proibido"""
-        resposta, usuario = mock_agent.processar_mensagem("invista em bitcoin, minha renda é 5000")
+        resposta, usuario = mock_agent.process_message("invista em bitcoin, minha renda é 5000")
 
         assert "não posso" in resposta.lower() or "recomenda" in resposta.lower()
 
@@ -162,7 +162,7 @@ class TestFinancialAgent:
 
     def test_resetar_confirmacao_pendente(self, mock_agent):
         """Testa reset de confirmação pendente"""
-        mock_agent.processar_mensagem("minha renda é 5000")
+        mock_agent.process_message("minha renda é 5000")
         assert mock_agent.tem_confirmacao_pendente()
 
         mock_agent.resetar_confirmacao_pendente()
@@ -172,16 +172,16 @@ class TestFinancialAgent:
         """Testa verificação de confirmação pendente"""
         assert not mock_agent.tem_confirmacao_pendente()
 
-        mock_agent.processar_mensagem("minha renda é 5000")
+        mock_agent.process_message("minha renda é 5000")
         assert mock_agent.tem_confirmacao_pendente()
 
     def test_confirmacao_ambigua(self, mock_agent):
         """Testa resposta ambígua durante confirmação"""
         # 1. Enviar dados
-        mock_agent.processar_mensagem("minha renda é 5000")
+        mock_agent.process_message("minha renda é 5000")
 
         # 2. Resposta ambígua
-        resposta, _ = mock_agent.processar_mensagem("talvez")
+        resposta, _ = mock_agent.process_message("talvez")
 
         assert "não entendi" in resposta.lower() or "sim ou não" in resposta.lower()
         assert mock_agent.tem_confirmacao_pendente()
@@ -191,22 +191,22 @@ class TestFinancialAgent:
         # Configura cenário: reserva > patrimônio (inválido)
         mock_agent.usuario["patrimonio_total"] = 10000.00
 
-        resposta, _ = mock_agent.processar_mensagem("minha reserva de emergência é 15000")
-        mock_agent.processar_mensagem("sim")
+        resposta, _ = mock_agent.process_message("minha reserva de emergência é 15000")
+        mock_agent.process_message("sim")
 
         # Reserva não deve ser maior que patrimônio
         # A validação deve impedir salvamento
         assert mock_agent.usuario["reserva_emergencia_atual"] != 15000.00
 
-    def test_salvar_interacao(self, mock_agent):
+    def test_save_interaction(self, mock_agent):
         """Testa que interações são salvas"""
         # Processa mensagem
-        mock_agent.processar_mensagem("minha renda é 5000")
+        mock_agent.process_message("minha renda é 5000")
 
         # Não deve levantar exceção
         assert True
 
-    def test_processar_mensagem_multiplas_vezes(self, mock_agent):
+    def test_process_message_multiplas_vezes(self, mock_agent):
         """Testa processamento de múltiplas mensagens"""
         mensagens = [
             "olá",
@@ -217,43 +217,43 @@ class TestFinancialAgent:
         ]
 
         for msg in mensagens:
-            resposta, _ = mock_agent.processar_mensagem(msg)
+            resposta, _ = mock_agent.process_message(msg)
             assert resposta is not None
 
     def test_estado_apos_confirmacao(self, mock_agent):
         """Testa que estado é limpo após confirmação"""
         # Enviar e confirmar
-        mock_agent.processar_mensagem("minha renda é 5000")
+        mock_agent.process_message("minha renda é 5000")
         assert mock_agent.tem_confirmacao_pendente()
 
-        mock_agent.processar_mensagem("sim")
+        mock_agent.process_message("sim")
         assert not mock_agent.tem_confirmacao_pendente()
 
         # Nova interação não deve ter pendência
-        mock_agent.processar_mensagem("olá")
+        mock_agent.process_message("olá")
         assert not mock_agent.tem_confirmacao_pendente()
 
     def test_idade_atualizada(self, mock_agent):
         """Testa atualização de idade"""
-        resposta, _ = mock_agent.processar_mensagem("tenho 40 anos")
+        resposta, _ = mock_agent.process_message("tenho 40 anos")
         assert mock_agent.tem_confirmacao_pendente()
 
-        mock_agent.processar_mensagem("sim")
+        mock_agent.process_message("sim")
         assert mock_agent.usuario["idade"] == 40
 
     def test_profissao_atualizada(self, mock_agent):
         """Testa atualização de profissão"""
-        resposta, _ = mock_agent.processar_mensagem("sou Engenheiro")
+        resposta, _ = mock_agent.process_message("sou Engenheiro")
 
         if mock_agent.tem_confirmacao_pendente():
-            mock_agent.processar_mensagem("sim")
+            mock_agent.process_message("sim")
             assert mock_agent.usuario["profissao"] == "Engenheiro"
 
     def test_meta_adicionada(self, mock_agent):
         """Testa adição de meta"""
         metas_iniciais = len(mock_agent.usuario.get("metas", []))
 
-        resposta, _ = mock_agent.processar_mensagem("meta de juntar 20000 até 2026")
-        mock_agent.processar_mensagem("sim")
+        resposta, _ = mock_agent.process_message("meta de juntar 20000 até 2026")
+        mock_agent.process_message("sim")
 
         assert len(mock_agent.usuario["metas"]) > metas_iniciais

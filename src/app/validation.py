@@ -15,22 +15,22 @@ class DataValidator:
         self.campos_suportados = config.CAMPOS_SUPORTADOS
         self.perfis_validos = config.PERFIS_VALIDOS
 
-    def validar_resposta(
+    def validate_answer(
         self,
         novos_dados: Dict[str, Any],
-        mensagem_original: str
+        user_message: str
     ) -> Tuple[bool, Optional[str]]:
         """
         Valida se os dados extraídos são seguros e válidos.
 
         Args:
             novos_dados: Dicionário com dados extraídos
-            mensagem_original: Mensagem original do usuário
+            user_message: Mensagem original do usuário
 
         Returns:
             Tupla (valido, mensagem_erro)
         """
-        texto = mensagem_original.lower()
+        texto = user_message.lower()
 
         # 1. Bloqueio por linguagem proibida (aconselhamento financeiro)
         for termo in self.termos_proibidos:

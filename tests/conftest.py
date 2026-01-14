@@ -15,7 +15,7 @@ class MockLLMProvider:
         self.response = response
         self.last_prompt = None
 
-    def gerar_resposta(self, prompt: str) -> str:
+    def generate_answer(self, prompt: str) -> str:
         """Retorna resposta mockada"""
         self.last_prompt = prompt
         return self.response
@@ -30,7 +30,7 @@ def temp_dir():
 
 
 @pytest.fixture
-def temp_usuario_file(temp_dir):
+def temp_user_file(temp_dir):
     """Cria arquivo temporário para usuário"""
     data_path = temp_dir / "data"
     data_path.mkdir()
@@ -38,10 +38,10 @@ def temp_usuario_file(temp_dir):
 
 
 @pytest.fixture
-def mock_data_manager(temp_usuario_file):
+def mock_data_manager(temp_user_file):
     """Fixture para DataManager com arquivo temporário"""
     from app.data import DataManager
-    return DataManager(usuario_file=temp_usuario_file)
+    return DataManager(user_file=temp_user_file)
 
 
 @pytest.fixture
@@ -87,7 +87,6 @@ def mock_agent(mock_data_manager, mock_extractor, mock_validator, mock_llm_manag
         validator=mock_validator,
         llm_manager=mock_llm_manager
     )
-    agent.inicializar()
     return agent
 
 
@@ -111,7 +110,6 @@ def mock_agent_malandro(mock_data_manager, mock_extractor, mock_validator):
         validator=mock_validator,
         llm_manager=LLMManager(provider=mock_llm_provider)
     )
-    agent.inicializar()
     return agent
 
 

@@ -45,4 +45,7 @@ echo "Iniciando aplicação Gradio..."
 echo "URL: http://localhost:7860"
 echo ""
 
-python src/app/main.py
+pip install watchfiles
+
+watchfiles --filter python "python src/app/main.py"
+# python src/app/main.py

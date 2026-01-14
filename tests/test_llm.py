@@ -17,17 +17,17 @@ class TestLLMManager:
 
         assert manager.provider == provider
 
-    def test_gerar_resposta_com_fatos(self, mock_llm_manager):
+    def test_generate_answer_com_fatos(self, mock_llm_manager):
         """Testa geração de resposta com fatos"""
         fatos = {"Renda: R$ 5000", "Perfil: moderado"}
-        resposta = mock_llm_manager.gerar_resposta("qual minha renda?", fatos)
+        resposta = mock_llm_manager.generate_answer("qual minha renda?", fatos)
 
         assert resposta is not None
         assert len(resposta) > 0
 
-    def test_gerar_resposta_sem_fatos(self, mock_llm_manager):
+    def test_generate_answer_sem_fatos(self, mock_llm_manager):
         """Testa geração de resposta sem fatos"""
-        resposta = mock_llm_manager.gerar_resposta("olá", set())
+        resposta = mock_llm_manager.generate_answer("olá", set())
 
         assert resposta is not None
 
@@ -56,22 +56,22 @@ class TestLLMManager:
 
     def test_gerar_boas_vindas_com_nome(self, mock_llm_manager):
         """Testa geração de boas-vindas com nome"""
-        mensagem = mock_llm_manager.gerar_resposta_boas_vindas("João")
+        mensagem = mock_llm_manager.generate_answer_boas_vindas("João")
 
         assert "João" in mensagem
         assert "BIA" in mensagem
 
     def test_gerar_boas_vindas_sem_nome(self, mock_llm_manager):
         """Testa geração de boas-vindas sem nome"""
-        mensagem = mock_llm_manager.gerar_resposta_boas_vindas()
+        mensagem = mock_llm_manager.generate_answer_boas_vindas()
 
         assert "BIA" in mensagem
         assert "assistente" in mensagem.lower()
 
-    def test_gerar_resposta_vazia_retorna_padrao(self, mock_llm_provider, mock_llm_manager):
+    def test_generate_answer_vazia_retorna_padrao(self, mock_llm_provider, mock_llm_manager):
         """Testa que resposta vazia retorna resposta padrão"""
         mock_llm_provider.response = ""
-        resposta = mock_llm_manager.gerar_resposta("teste", set())
+        resposta = mock_llm_manager.generate_answer("teste", set())
 
         assert len(resposta) > 0
         assert "Desculpe" in resposta or "dificuldade" in resposta
@@ -111,10 +111,10 @@ class TestOllamaProvider:
         assert provider.timeout == 60
 
     @pytest.mark.skipif(True, reason="Requer Ollama instalado")
-    def test_gerar_resposta_ollama_real(self):
+    def test_generate_answer_ollama_real(self):
         """Testa geração real com Ollama (skip se não disponível)"""
         provider = OllamaProvider()
-        resposta = provider.gerar_resposta("Olá")
+        resposta = provider.generate_answer("Olá")
 
         assert resposta is not None
         assert len(resposta) > 0
