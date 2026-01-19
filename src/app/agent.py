@@ -238,7 +238,11 @@ class FinancialAgent:
 
         return fatos
 
-    def process_message(self, user_message: str, history: list[dict]) -> str:
+    def process_message(
+            self,
+            user_message: str,
+            history: list[dict]
+        ) -> str:
         """
         Processa mensagem do usuário e retorna resposta.
 

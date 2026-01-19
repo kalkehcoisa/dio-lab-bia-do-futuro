@@ -58,6 +58,7 @@ class LLMManager:
             LLMError: Se houver erro na geração
         """
         answer = self.provider.generate_answer(messages_prompt)
+        print(answer)
         json_answer = json.loads(answer)
     
         # Validação básica da resposta
