@@ -1,355 +1,321 @@
 """
-Testes funcionais (integração) do mock_agente financeiro
+Testes funcionais (integração) do agente financeiro
 """
+import pytest
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "app"))
+sys.path.insert(0, str(Path(__file__).parent))
+
+from tests.conftest import MockLLMProvider, MockLLMManager
 
 
-class TestFluxosCompletos:
-    """Testes de fluxos completos end-to-end"""
+class TestFluxoBasico:
+    """Testes de fluxo básico do agente"""
 
-    def test_onboarding_usuario_novo(self, mock_agent):
-        """Testa fluxo completo de onboarding de novo usuário"""
-        # 1. Boas-vindas
-        boas_vindas = mock_agent.obter_mensagem_boas_vindas()
-        assert len(boas_vindas) > 0
+    def test_boas_vindas(self, mock_agent):
+        """Testa mensagem de boas-vindas"""
+        mensagem = mock_agent.welcome_message()
+        
+        assert len(mensagem) > 0
+        assert "BIA" in mensagem
 
-        # 2. Usuário informa renda
-        resp1, _ = mock_agent.process_message("minha renda mensal é 5500 reais")
-        assert "5,500" in resp1
-        assert mock_agent.tem_confirmacao_pendente()
+    def test_processar_mensagem_simples(self, mock_agent):
+        """Testa processamento de mensagem simples"""
+        resposta = mock_agent.process_message("olá", [])
+        
+        assert resposta is not None
+        assert len(resposta) > 0
 
-        # 3. Confirma renda
-        resp2, _ = mock_agent.process_message("sim")
-        assert "confirmado" in resp2.lower()
-        assert not mock_agent.tem_confirmacao_pendente()
-        assert mock_agent.usuario["renda_mensal"] == 5500.0
-
-        # 4. Informa perfil
-        resp3, _ = mock_agent.process_message("meu perfil é moderado")
-        assert "moderado" in resp3.lower()
-
-        # 5. Confirma perfil
-        resp4, _ = mock_agent.process_message("confirmo")
-        assert mock_agent.usuario["perfil_investidor"]["valor"] == "moderado"
-
-        # 6. Define meta
-        resp5, _ = mock_agent.process_message("quero juntar 30000 até 2026")
-        assert "30,000" in resp5
-
-        # 7. Confirma meta
-        resp6, _ = mock_agent.process_message("sim")
-        assert len(mock_agent.usuario["metas"]) > 0
-
-    def test_consulta_informacoes(self, mock_agent):
-        """Testa fluxo de consulta de informações"""
-        # Setup: Adiciona dados ao perfil
-        mock_agent.usuario["renda_mensal"] = 6000.0
-        mock_agent.usuario["perfil_investidor"] = {
-            "valor": "moderado",
-            "confirmado": True
-        }
-        mock_agent.data_manager.save_user(mock_agent.usuario)
-
-        # Consulta informações
-        resp, _ = mock_agent.process_message("qual é minha renda?")
-        assert resp is not None
-        assert len(resp) > 0
-
-    def test_atualizacao_dados_existentes(self, mock_agent):
-        """Testa atualização de dados já existentes"""
-        # Setup: Dados iniciais
-        mock_agent.process_message("minha renda é 5000")
-        mock_agent.process_message("sim")
-        assert mock_agent.usuario["renda_mensal"] == 5000.0
-
-        # Atualiza renda
-        mock_agent.process_message("agora minha renda é 6500")
-        mock_agent.process_message("sim")
-
-        # Verifica atualização
-        assert mock_agent.usuario["renda_mensal"] == 6500.0
-
-    def test_adicao_multiplas_metas(self, mock_agent):
-        """Testa adição de múltiplas metas"""
-        metas_iniciais = len(mock_agent.usuario.get("metas", []))
-
-        # Meta 1
-        mock_agent.process_message("meta de juntar 20000 até 2025")
-        mock_agent.process_message("sim")
-
-        # Meta 2
-        mock_agent.process_message("meta de juntar 50000 até 2027")
-        mock_agent.process_message("sim")
-
-        assert len(mock_agent.usuario["metas"]) == metas_iniciais + 2
-
-    def test_rejeicao_dados_invalidos(self, mock_agent):
-        """Testa rejeição de dados inválidos"""
-        # Tenta informar renda negativa
-        resp, _ = mock_agent.process_message("minha renda é -3000")
-
-        assert "erro" in resp.lower() or "positivo" in resp.lower()
-        assert not mock_agent.tem_confirmacao_pendente()
-
-    def test_cancelamento_durante_confirmacao(self, mock_agent):
-        """Testa cancelamento durante processo de confirmação"""
-        renda_inicial = mock_agent.usuario.get("renda_mensal")
-
-        # Informa nova renda
-        mock_agent.process_message("minha renda é 7000")
-        assert mock_agent.tem_confirmacao_pendente()
-
-        # Cancela
-        resp, _ = mock_agent.process_message("não")
-
-        assert not mock_agent.tem_confirmacao_pendente()
-        assert mock_agent.usuario.get("renda_mensal") == renda_inicial
-
-    def test_bloqueio_aconselhamento_financeiro(self, mock_agent_malandro):
-        """Testa bloqueio de aconselhamento financeiro"""
-        mensagens_proibidas = [
-            "invista em bitcoin",
-            "recomendo comprar ações",
-            "aplique em tesouro direto",
-            "compre fundos imobiliários"
-        ]
-
-        for msg in mensagens_proibidas:
-            resp, _ = mock_agent_malandro.process_message(msg)
-            assert "não posso" in resp.lower() or "recomenda" in resp.lower()
+    def test_resumo_perfil(self, mock_agent):
+        """Testa obtenção de resumo"""
+        resumo = mock_agent.obter_resumo_perfil()
+        
+        assert resumo is not None
 
 
-class TestScenariosComplexos:
-    """Testes de cenários complexos"""
+class TestExtracaoDados:
+    """Testes de extração de dados"""
 
-    def test_perfil_completo_passo_a_passo(self, mock_agent):
-        """Testa construção completa de perfil passo a passo"""
-        # Idade
-        mock_agent.process_message("tenho 32 anos")
-        mock_agent.process_message("sim")
-
-        # Profissão
-        mock_agent.process_message("sou Analista de Sistemas")
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-
-        # Renda
-        mock_agent.process_message("ganho 8000 por mês")
-        mock_agent.process_message("sim")
-
-        # Perfil
-        mock_agent.process_message("sou moderado")
-        mock_agent.process_message("sim")
-
-        # Patrimônio
-        mock_agent.process_message("meu patrimônio total é 50000")
-        mock_agent.process_message("sim")
-
-        # Reserva
-        mock_agent.process_message("tenho 20000 na reserva de emergência")
-        mock_agent.process_message("sim")
-
-        # Verificações
-        assert mock_agent.usuario["idade"] == 32
-        assert mock_agent.usuario["renda_mensal"] == 8000.0
-        assert mock_agent.usuario["perfil_investidor"]["valor"] == "moderado"
-        assert mock_agent.usuario["patrimonio_total"] == 50000.0
-        assert mock_agent.usuario["reserva_emergencia_atual"] == 20000.0
-
-    def test_informacoes_em_lote(self, mock_agent):
-        """Testa informar múltiplos dados de uma vez"""
-        resp, _ = mock_agent.process_message(
-            "tenho 35 anos, ganho 7000 reais por mês e sou conservador"
+    def test_extrai_renda(self, mock_data_manager, mock_validator):
+        """Testa extração de renda"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Entendi! Sua renda é R$ 6.000,00.",
+            "user_message": "minha renda é 6000",
+            "dados_extraidos": {
+                "renda_mensal": 6000.0,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
         )
+        
+        agent.process_message("minha renda é 6000", [])
+        assert agent.user["renda_mensal"] == 6000.0
 
-        assert mock_agent.tem_confirmacao_pendente()
+    def test_extrai_idade(self, mock_data_manager, mock_validator):
+        """Testa extração de idade"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Entendi! Você tem 30 anos.",
+            "user_message": "tenho 30 anos",
+            "dados_extraidos": {
+                "renda_mensal": None,
+                "perfil_investidor": None,
+                "idade": 30,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        
+        agent.process_message("tenho 30 anos", [])
+        assert agent.user["idade"] == 30
 
-        mock_agent.process_message("sim")
+    def test_extrai_perfil(self, mock_data_manager, mock_validator):
+        """Testa extração de perfil"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Entendi! Seu perfil é moderado.",
+            "user_message": "sou moderado",
+            "dados_extraidos": {
+                "renda_mensal": None,
+                "perfil_investidor": "moderado",
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        
+        agent.process_message("sou moderado", [])
+        assert agent.user["perfil_investidor"] == "moderado"
 
-        assert mock_agent.usuario["idade"] == 35
-        assert mock_agent.usuario["renda_mensal"] == 7000.0
-        assert mock_agent.usuario["perfil_investidor"]["valor"] == "conservador"
+    def test_extrai_multiplos_dados(self, mock_data_manager, mock_validator):
+        """Testa extração de múltiplos dados"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Entendi! Você tem 35 anos e ganha R$ 7.000.",
+            "user_message": "tenho 35 anos e ganho 7000",
+            "dados_extraidos": {
+                "renda_mensal": 7000.0,
+                "perfil_investidor": None,
+                "idade": 35,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        
+        agent.process_message("tenho 35 anos e ganho 7000", [])
+        assert agent.user["idade"] == 35
+        assert agent.user["renda_mensal"] == 7000.0
 
-    def test_validacao_consistencia_perfil(self, mock_agent):
-        """Testa validação de consistência entre dados do perfil"""
-        # Define patrimônio
-        mock_agent.process_message("meu patrimônio é 15000")
-        mock_agent.process_message("sim")
 
-        # Tenta definir reserva maior que patrimônio
-        resp, _ = mock_agent.process_message("minha reserva de emergência é 20000")
-        mock_agent.process_message("sim")
+class TestPersistencia:
+    """Testes de persistência de dados"""
 
-        # Deve rejeitar por inconsistência
-        # Reserva não pode ser maior que patrimônio
-        if mock_agent.usuario.get("reserva_emergencia_atual") == 20000.0:
-            # Se salvou, o patrimônio deve ter sido ajustado ou validação falhou
-            assert mock_agent.usuario["patrimonio_total"] >= 20000.0
+    def test_dados_persistidos(self, mock_data_manager, mock_validator):
+        """Testa que dados são persistidos"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Renda salva!",
+            "user_message": "renda 5500",
+            "dados_extraidos": {
+                "renda_mensal": 5500.0,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        
+        agent.process_message("minha renda é 5500", [])
+        
+        # Recarrega do arquivo
+        user_reloaded = mock_data_manager.load_user()
+        assert user_reloaded["renda_mensal"] == 5500.0
 
-    def test_persistencia_dados(self, temp_user_file):
-        """Testa persistência de dados entre sessões"""
-        from app.agent import FinancialAgent
-        from app.data import DataManager
-        # Sessão 1: Cria mock_agente e adiciona dados
+    def test_persistencia_entre_sessoes(self, temp_user_file, mock_validator):
+        """Testa persistência entre sessões"""
+        from agent import FinancialAgent
+        from data import DataManager
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Renda salva!",
+            "user_message": "renda 8000",
+            "dados_extraidos": {
+                "renda_mensal": 8000.0,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        # Sessão 1
         dm1 = DataManager(user_file=temp_user_file)
-        mock_agent1 = FinancialAgent(data_manager=dm1)
-
-        mock_agent1.process_message("minha renda é 5500")
-        mock_agent1.process_message("sim")
-
-        assert mock_agent1.usuario["renda_mensal"] == 5500.0
-
-        # Sessão 2: Novo mock_agente carrega dados
+        agent1 = FinancialAgent(
+            data_manager=dm1,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        agent1.process_message("minha renda é 8000", [])
+        assert agent1.user["renda_mensal"] == 8000.0
+        
+        # Sessão 2
         dm2 = DataManager(user_file=temp_user_file)
-        mock_agent2 = FinancialAgent(data_manager=dm2)
+        agent2 = FinancialAgent(
+            data_manager=dm2,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=MockLLMProvider())
+        )
+        
+        # Dados devem ter sido carregados
+        assert agent2.user["renda_mensal"] == 8000.0
 
-        assert mock_agent2.usuario["renda_mensal"] == 5500.0
 
-    def test_conversacao_mista(self, mock_agent):
-        """Testa conversação misturando dados e perguntas"""
-        # Pergunta
-        resp1, _ = mock_agent.process_message("como você pode me ajudar?")
-        assert len(resp1) > 0
+class TestContexto:
+    """Testes de uso de contexto"""
 
-        # Informa dado
-        resp2, _ = mock_agent.process_message("minha renda é 6000")
-        assert mock_agent.tem_confirmacao_pendente()
+    def test_fatos_no_prompt(self, mock_data_manager, mock_validator, mock_usuario):
+        """Testa que fatos do usuário vão para o prompt"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider()
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
+        )
+        
+        # Configura usuário com dados
+        agent.user = mock_usuario
+        
+        # Processa mensagem
+        agent.process_message("qual minha renda?", [])
+        
+        # Verifica que prompt contém dados do usuário
+        last_prompt = provider.last_prompt
+        prompt_text = json.dumps(last_prompt)
+        
+        assert "5" in prompt_text  # renda 5000
+        assert "moderado" in prompt_text.lower()
 
-        # Confirma
-        mock_agent.process_message("sim")
-
-        # Outra pergunta
-        resp3, _ = mock_agent.process_message("qual minha renda atual?")
-        assert len(resp3) > 0
+    def test_historico_incluso(self, mock_agent):
+        """Testa que histórico é incluído"""
+        history = [
+            {"role": "user", "content": "pergunta anterior"},
+            {"role": "assistant", "content": "resposta anterior"}
+        ]
+        
+        mock_agent.process_message("nova pergunta", history)
+        
+        last_prompt = mock_agent.llm_manager.provider.last_prompt
+        prompt_text = json.dumps(last_prompt)
+        
+        assert "pergunta anterior" in prompt_text
 
 
 class TestRobustez:
-    """Testes de robustez e edge cases"""
+    """Testes de robustez"""
 
-    def test_mensagens_vazias(self, mock_agent):
-        """Testa processamento de mensagens vazias"""
-        resp, _ = mock_agent.process_message("")
-        assert resp is not None
+    def test_mensagem_vazia(self, mock_agent):
+        """Testa processamento de mensagem vazia"""
+        resposta = mock_agent.process_message("", [])
+        assert resposta is not None
 
-    def test_mensagens_muito_longas(self, mock_agent):
-        """Testa processamento de mensagens muito longas"""
-        mensagem = "teste " * 1000
-        resp, _ = mock_agent.process_message(mensagem)
-        assert resp is not None
+    def test_historico_vazio(self, mock_agent):
+        """Testa processamento com histórico vazio"""
+        resposta = mock_agent.process_message("teste", [])
+        assert resposta is not None
 
-    def test_caracteres_especiais(self, mock_agent):
-        """Testa processamento com caracteres especiais"""
-        resp, _ = mock_agent.process_message("minha renda é R$ 5.000,00")
-
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-            assert mock_agent.usuario["renda_mensal"] == 5000.0
-
-    def test_valores_limites(self, mock_agent):
-        """Testa valores nos limites"""
-        # Renda mínima válida
-        resp1, _ = mock_agent.process_message("minha renda é 0.01")
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-            assert mock_agent.usuario["renda_mensal"] == 0.01
-
-        # Idade mínima
-        resp2, _ = mock_agent.process_message("tenho 18 anos")
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-            assert mock_agent.usuario["idade"] == 18
-
-    def test_valores_fora_limites(self, mock_agent):
-        """Testa valores fora dos limites"""
-        # Idade abaixo do mínimo
-        resp1, _ = mock_agent.process_message("tenho 15 anos")
-        assert resp1 == 'A idade deve estar entre 18 e 120 anos.'
-
-        # Idade acima do máximo
-        resp2, _ = mock_agent.process_message("tenho 1500 anos")
-        assert resp2 == 'A idade deve estar entre 18 e 120 anos.'
-
-    def test_case_sensitivity(self, mock_agent):
-        """Testa sensibilidade a maiúsculas/minúsculas"""
-        # Confirmação em maiúsculas
-        mock_agent.process_message("minha renda é 5000")
-        resp, _ = mock_agent.process_message("SIM")
-
-        assert mock_agent.usuario["renda_mensal"] == 5000.0
-
-    def test_espacos_extras(self, mock_agent):
-        """Testa mensagens com espaços extras"""
-        resp, _ = mock_agent.process_message("  minha   renda   é   5000  ")
-
-        if mock_agent.tem_confirmacao_pendente():
-            assert True  # Dados foram extraídos corretamente
-
-    def test_acentuacao(self, mock_agent):
-        """Testa mensagens com acentuação"""
-        resp, _ = mock_agent.process_message("minha renda é 5000 reais")
-        assert resp is not None
-
-        resp2, _ = mock_agent.process_message("reserva de emergência é 10000")
-        assert resp2 is not None
-
-    def test_confirmacoes_sequenciais(self, mock_agent):
-        """Testa múltiplas confirmações em sequência"""
-        # Primeira confirmação
-        mock_agent.process_message("minha renda é 5000")
-        mock_agent.process_message("sim")
-
-        # Segunda confirmação imediata
-        mock_agent.process_message("sou moderado")
-        mock_agent.process_message("sim")
-
-        # Terceira confirmação
-        mock_agent.process_message("tenho 30 anos")
-        mock_agent.process_message("sim")
-
-        assert mock_agent.usuario["renda_mensal"] == 5000.0
-        assert mock_agent.usuario["perfil_investidor"]["valor"] == "moderado"
-        assert mock_agent.usuario["idade"] == 30
-
-
-class TestExtracaoAvancada:
-    """Testes avançados de extração"""
-
-    def test_formatos_monetarios_diversos(self, mock_agent):
-        """Testa extração de diferentes formatos monetários"""
-        from app.agent import FinancialAgent
-        formatos = [
-            ("ganho 5000", 5000.0),
-            ("ganho R$ 5.000", 5000.0),
-            ("ganho 5.000,00", 5000.0),
-            ("ganho R$ 5000,00", 5000.0),
+    def test_historico_com_campos_extras(self, mock_agent):
+        """Testa que campos extras no histórico são ignorados"""
+        history = [
+            {"role": "user", "content": "oi", "extra": "campo", "outro": 123}
         ]
+        resposta = mock_agent.process_message("teste", history)
+        assert resposta is not None
 
-        for mensagem, valor_esperado in formatos:
-            mock_agent_temp = FinancialAgent(
-                data_manager=mock_agent.data_manager,
-                extractor=mock_agent.extractor,
-                validator=mock_agent.validator,
-                llm_manager=mock_agent.llm_manager
-            )
-
-            resp, _ = mock_agent_temp.process_message(mensagem)
-            if mock_agent_temp.tem_confirmacao_pendente():
-                mock_agent_temp.process_message("sim")
-                assert mock_agent_temp.usuario["renda_mensal"] == valor_esperado
-
-    def test_extracao_contexto_natural(self, mock_agent):
-        """Testa extração em contexto de linguagem natural"""
-        mensagem = (
-            "Oi, tudo bem? Eu me chamo João, tenho 35 anos e "
-            "trabalho como engenheiro. Minha renda mensal é de "
-            "R$ 8.500 e me considero um investidor moderado."
+    def test_dados_nulos_ignorados(self, mock_data_manager, mock_validator):
+        """Testa que dados nulos são ignorados"""
+        from agent import FinancialAgent
+        
+        provider = MockLLMProvider(response_data={
+            "resposta": "Olá!",
+            "user_message": "oi",
+            "dados_extraidos": {
+                "renda_mensal": None,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        
+        agent = FinancialAgent(
+            data_manager=mock_data_manager,
+            validator=mock_validator,
+            llm_manager=MockLLMManager(provider=provider)
         )
-
-        resp, _ = mock_agent.process_message(mensagem)
-
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-
-            # Verifica que múltiplos dados foram extraídos
-            assert mock_agent.usuario["idade"] == 35
-            assert mock_agent.usuario["renda_mensal"] == 8500.0
-            assert mock_agent.usuario["perfil_investidor"]["valor"] == "moderado"
+        
+        # Define renda inicial
+        agent.user["renda_mensal"] = 5000.0
+        
+        # Processa mensagem que não extrai dados
+        agent.process_message("oi", [])
+        
+        # Renda não deve ser sobrescrita
+        assert agent.user["renda_mensal"] == 5000.0

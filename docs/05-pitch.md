@@ -9,28 +9,36 @@
 - Solução atual: dashboards genéricos ou consultoria cara e demorada.
 
 ### 2. A Solução (1min)
-- Um agente conversacional que entende o perfil financeiro e as transações do usuário e entrega recomendações práticas e acionáveis em linguagem natural.
+- **BIA**: uma assistente financeira conversacional que extrai automaticamente o perfil do usuário e entrega orientações educativas em linguagem natural.
 - Funcionalidades principais:
-  - Resumo de saúde financeira (saldo, reserva, dívidas).
-  - Sugestões de alocação simples (liquidez x rendimento).
+  - Extração automática de dados financeiros da conversa (renda, metas, patrimônio)
+  - Persistência do perfil do usuário em JSON
+  - Orientação educativa sem recomendação de investimentos específicos
   - Perguntas de esclarecimento automáticas quando faltam dados.
-- Implementação: fluxo do agente em src/app/agent.py, LLM wrapper em src/app/llm.py e pré-processamento em src/app/data.py.
+- Implementação: 
+  - Agente: [src/app/agent.py](../src/app/agent.py)
+  - LLM (Groq): [src/app/llm.py](../src/app/llm.py)
+  - Dados: [src/app/data.py](../src/app/data.py)
 
 ### 3. Demonstração (1min)
 - Mostrar rapidamente (ao vivo ou vídeo):
-  1. Iniciar o serviço local (ex.: script de execução ou `src/app/main.py`).
-  2. Carregar dados de exemplo: data/usuario.json e data/transacoes.csv.
-  3. Interação real: usuário pergunta "Como posso aumentar minha reserva de emergência com R$ 500 por mês?" — agente responde com resumo + plano de ação (ex.: dividir entre liquidez e CDB, passos práticos).
+  1. Iniciar o serviço: `cd src/app && python main.py`
+  2. Acessar http://localhost:7860
+  3. Interação real: usuário informa dados ("Minha renda é R$ 5.000") e a BIA extrai automaticamente.
+  4. Clicar em "Mostrar dados" para ver o perfil sendo atualizado em tempo real.
 - Script curto para a demo (fala):
-  - "Vou usar o perfil do usuário João (dados de exemplo) e pedir um plano de reserva com R$ 500/mês. O agente considera histórico de transações e propõe uma alocação prática e verificável."
+  - "Vou conversar com a BIA informando minha renda e metas. Vejam como ela extrai os dados automaticamente e personaliza as respostas com base no meu perfil."
 
 ### 4. Diferencial e Impacto (30s)
 - Diferenciais técnicos:
-  - Contextualização com dados reais do usuário (pré-processados e mascarados).
-  - Regras de segurança para evitar vazamento de dados sensíveis e prompt-engineering robusto ([src/app/data.py], [src/app/llm.py]).
-  - Testes automatizados cobrindo contratos de prompt e vazamentos (pasta `tests/`).
+  - **Extração automática de dados**: a BIA identifica e persiste informações financeiras da conversa
+  - **Resposta estruturada**: LLM retorna JSON que separa resposta de dados extraídos
+  - **Segurança**: bloqueio de termos proibidos (investimentos específicos), validação de dados
+  - **Testes automatizados**: cobertura em [tests/](../tests/)
 - Impacto:
-  - Acesso rápido a recomendações pessoais, menor custo do que consultoria, aumento da literacia financeira do usuário.
+  - Organização financeira acessível e gratuita
+  - Aumento da literacia financeira do usuário
+  - Demonstração prática de integração IA + Python + UX
 
 ---
 
@@ -44,9 +52,10 @@
 
 ## Demonstração técnica (detalhes rápidos)
 - Pontos que podem aparecer em slides ou código:
-  - Onde o prompt é montado: src/app/agent.py.  
-  - Wrapping do provedor LLM: src/app/llm.py.  
-  - Dados de entrada (exemplos): data/usuario.json, data/transacoes.csv.
+  - Onde o prompt é montado: [src/app/agent.py](../src/app/agent.py)
+  - Wrapping do provedor LLM: [src/app/llm.py](../src/app/llm.py) (Groq API)
+  - Dados persistidos: [src/app/data/usuario.json](../src/app/data/usuario.json)
+  - Interface: [src/app/main.py](../src/app/main.py) (Gradio)
 
 ---
 

@@ -58,9 +58,13 @@ class LLMManager:
             LLMError: Se houver erro na geração
         """
         answer = self.provider.generate_answer(messages_prompt)
-        print(answer)
-        json_answer = json.loads(answer)
-    
+        print("start:\n", answer, "\nend")
+        try:
+            json_answer = json.loads(answer)
+        except json.JSONDecodeError:
+            raise LLMError(
+                "Erro ao se comunicar com o servidor. Por favor, aguarde e tente novamente mais tarde."
+            )
         # Validação básica da resposta
         if not json_answer['resposta'] or len(json_answer['resposta'].strip()) == 0:
             json_answer['resposta'] = self._default_answer()
@@ -71,5 +75,5 @@ class LLMManager:
         """Retorna resposta padrão em caso de erro"""
         return (
             "Desculpe, tive dificuldade em processar sua mensagem. "
-            "Pode reformular de outra forma?"
+            "Poderia escrever de outra forma?"
         )

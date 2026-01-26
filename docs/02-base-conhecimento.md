@@ -2,16 +2,17 @@
 
 ## Dados Utilizados
 
-Os dados do projeto ficam em `src/data/` e são consumidos pelo agente em `src/app/`. Arquivos usados no projeto:
+Os dados do projeto ficam em `src/data/` (fixtures/exemplos) e `src/app/data/` (dados de runtime). Arquivos usados no projeto:
 
 | Arquivo | Local | Formato | Utilização no Agente |
 |---------|-------|---------|---------------------|
-| historico_financeiro.json | [src/data/historico_financeiro.json](src/data/historico_financeiro.json) | JSON | Perfil financeiro histórico do usuário (resumo, empréstimos, investimentos) |
-| transacoes.csv | [src/data/transacoes.csv](src/data/transacoes.csv) | CSV | Lista de transações usadas para identificar padrões de gasto recentes |
-| usuario.json | [src/data/usuario.json](src/data/usuario.json) | JSON | Dados cadastrais e preferências do usuário |
-| interações (mock) | [src/app/data.py](src/app/data.py) / [src/data/interacoes/](src/data/interacoes/) | JSON/CSV | Histórico de conversas / interações usadas para contextualizar diálogo |
+| usuario.json | [src/app/data/usuario.json](../src/app/data/usuario.json) | JSON | Perfil do usuário (persistido em runtime) |
+| interações | [src/app/data/interacoes/](../src/app/data/interacoes/) | JSON | Histórico de conversas salvas automaticamente |
+| usuario.json (exemplo) | [src/data/usuario.json](../src/data/usuario.json) | JSON | Exemplo de perfil de usuário |
+| transacoes.csv | [src/data/transacoes.csv](../src/data/transacoes.csv) | CSV | Exemplo de transações (fixture) |
+| historico_financeiro.json | [src/data/historico_financeiro.json](../src/data/historico_financeiro.json) | JSON | Exemplo de histórico financeiro (fixture) |
 
-Observação: o carregamento e a normalização centralizados estão implementados em [src/app/data.py](src/app/data.py), que é chamado pelo agente em [src/app/agent.py](src/app/agent.py).
+Observação: o carregamento e a normalização centralizados estão implementados em [src/app/data.py](../src/app/data.py), que é chamado pelo agente em [src/app/agent.py](../src/app/agent.py).
 
 ---
 
@@ -52,29 +53,27 @@ Exemplo de transformação simples (pseudo):
 
 ## Exemplo de Contexto Montado
 
-Exemplo do bloco de contexto que o agente monta antes de enviar ao LLM:
+Exemplo do bloco de contexto que o agente monta antes de enviar ao LLM (baseado no arquivo `src/data/usuario.json`):
 
-Dados do Cliente:
+```
+INFORMAÇÕES DISPONÍVEIS DO USUÁRIO:
 - Nome: João Silva
-- Perfil de investimento: Moderado
-- Renda mensal: R$ 8.000
-- Objetivo: Reserva de emergência (12 meses)
+- Idade: 32 anos
+- Profissão: Analista de Sistemas
+- Renda mensal: R$ 5.000,00
+- Patrimônio total: R$ 15.000,00
+- Reserva de emergência: R$ 10.000,00
+- Perfil de investidor: moderado
+- Objetivo principal: Construir reserva de emergência
+- Meta: Completar reserva de emergência - R$ 15.000,00 até 2026-06
+- Meta: Entrada do apartamento - R$ 50.000,00 até 2027-12
+```
 
-Resumo financeiro:
-- Saldo atual (conta corrente): R$ 3.200
-- Investimentos liquidez alta: R$ 7.500
-- Dívidas: R$ 0
-
-Últimas transações (ultimas 5):
-- 2025-11-01: Supermercado — R$ 450
-- 2025-11-03: Streaming — R$ 55
-- 2025-11-05: Farmácia — R$ 78
-- 2025-11-07: Restaurante — R$ 120
-- 2025-11-10: Conta de luz — R$ 210
-
-Prompt composto (resumo):
-- System: contexto do domínio + políticas (limitar recomendações a produtos existentes).
-- User: pergunta do usuário + bloco "Dados do Cliente" + "Últimas transações".
+Prompt composto (estrutura):
+- **System prompt**: regras da BIA, formato de resposta JSON, restrições
+- **System (contexto)**: fatos extraídos do perfil do usuário
+- **Histórico**: mensagens anteriores da conversa (compactadas se necessário)
+- **User**: mensagem atual do usuário
 
 ---
 

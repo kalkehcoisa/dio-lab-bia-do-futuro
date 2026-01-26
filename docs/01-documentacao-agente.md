@@ -37,7 +37,7 @@ Ele explica conceitos, apresenta cenários possíveis com base nos dados forneci
 
 ### Nome do Agente
 
-**Aurora** – Assessor Financeiro Pessoal
+**BIA** – Assessora Financeira Pessoal
 
 ---
 
@@ -73,27 +73,34 @@ Tom **acessível e didático**, com linguagem simples e exemplos práticos. Evit
 
 ```mermaid
 flowchart TD
-    A[Usuário] -->|Mensagem| B[Interface Conversacional]
-    B --> C[LLM]
-    C --> D[Gerenciador de Contexto]
-    D --> C
-    C --> E[Motor de Simulação Financeira]
+    A[Usuário] -->|Mensagem| B[Interface Gradio<br/>main.py]
+    B --> C[FinancialAgent<br/>agent.py]
+    C --> D[DataManager<br/>data.py]
+    D -->|Carrega perfil| C
+    C --> E[LLMManager<br/>llm.py]
+    E -->|API Groq| F[Llama 3.3 70B]
+    F -->|JSON estruturado| E
     E --> C
-    C --> F[Validação e Segurança]
-    F --> G[Resposta ao Usuário]
+    C --> G[DataValidator<br/>validation.py]
+    G --> C
+    C -->|Extrai dados| D
+    D -->|Persiste JSON| H[(usuario.json)]
+    C --> B
+    B -->|Resposta| A
 ```
 
 ---
 
 ### Componentes
 
-| Componente               | Descrição                                                   |
-| ------------------------ | ----------------------------------------------------------- |
-| Interface Conversacional | Chat simples (ex: Streamlit ou Gradio)                      |
-| LLM                      | Modelo de linguagem para compreensão e geração de respostas |
-| Gerenciador de Contexto  | Armazena perfil e informações da sessão                     |
-| Motor de Simulação       | Cálculos financeiros em Python                              |
-| Validação e Segurança    | Garante respostas responsáveis e limitações                 |
+| Componente | Arquivo | Descrição |
+|------------|---------|-----------|
+| Interface Conversacional | `src/app/main.py` | Interface Gradio com chat e visualização de dados |
+| Agente Financeiro | `src/app/agent.py` | Orquestra fluxo, monta prompts, processa respostas |
+| Gerenciador de LLM | `src/app/llm.py` | Integração com API Groq (Llama 3.3 70B) |
+| Gerenciador de Dados | `src/app/data.py` | Carrega, atualiza e persiste perfil do usuário |
+| Validador | `src/app/validation.py` | Valida dados extraídos e bloqueia termos proibidos |
+| Configurações | `src/app/config.py` | Caminhos, constantes e parâmetros do LLM |
 
 ---
 

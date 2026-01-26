@@ -1,7 +1,7 @@
 """
 Lógica principal do agente financeiro
 """
-from typing import Dict, Any, Tuple, Optional
+from typing import Any, Optional
 
 from data import DataManager
 from validation import DataValidator
@@ -28,12 +28,21 @@ INSTRUÇÕES:
 - Se precisar de mais informações, pergunte ao usuário
 - Não invente dados ou faça suposições
 - Seja útil mas não dê conselhos de investimento específicos
-- Sempre que apresentar um resultado, descreva como ele foi obtido (fórmulas, metodologias, etc)
+
+SIMULAÇÕES FINANCEIRAS:
+Você pode fazer cálculos financeiros quando solicitado. Exemplos:
+- Parcelamento com/sem juros (use fórmula Price se houver juros)
+- Comparação à vista vs parcelado
+- Projeção de reserva de emergência
+- Juros compostos
+
+Ao fazer cálculos, mostre:
+1. O resultado principal em destaque
+2. Os valores usados no cálculo
+3. Uma breve explicação do raciocínio
 
 Você DEVE responder SEMPRE em JSON válido.
 Nunca escreva texto fora do JSON.
-
-A chave "resposta" é o espaço para sua usual. 
 
 Formato obrigatório:
 {
@@ -61,6 +70,13 @@ Não invente valores.
 """
 
 INSTRUCTIONS = 'INFORMAÇÕES DISPONÍVEIS DO USUÁRIO:\n{context}'
+
+EXAMPLES = """
+Consigo parcelar uma compra de R$ 3.000?
+Vale mais pagar à vista ou parcelar?
+Como funcionam os juros do cartão de crédito?
+Quais investimentos existem para quem ganha um salário mínimo?
+"""
 
 
 class FinancialAgent:
@@ -287,6 +303,7 @@ class FinancialAgent:
 
     def welcome_message(self) -> str:
         """Retorna mensagem de boas-vindas"""
+        global EXAMPLES
         nome = self.user.get("nome") if self.user else None
         return f"Olá, {nome}!" if nome else "Olá!" + """
 
@@ -296,6 +313,9 @@ Organizar suas informações financeiras
 Acompanhar suas metas
 Entender melhor seu perfil financeiro
 Aprender sobre educação financeira
+
+Alguns exemplos de perguntas:
+{EXAMPLES}
 
 Como posso ajudar você hoje?"""
 

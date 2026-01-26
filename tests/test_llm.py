@@ -2,119 +2,134 @@
 Testes para módulo LLM
 """
 import pytest
+import json
+import sys
+from pathlib import Path
 
-from app.llm import LLMManager, OllamaProvider
-from app.exceptions import LLMError
+sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "app"))
+
+from llm import LLMManager
+from exceptions import LLMError
+
+
+class MockProvider:
+    """Provider mock para testes"""
+    
+    def __init__(self, response: str = None):
+        self.response = response or json.dumps({
+            "resposta": "Resposta de teste",
+            "user_message": "teste",
+            "dados_extraidos": {
+                "renda_mensal": None,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        })
+        self.last_prompt = None
+
+    def generate_answer(self, messages_prompt: list[dict]) -> str:
+        self.last_prompt = messages_prompt
+        return self.response
 
 
 class TestLLMManager:
     """Testes para LLMManager"""
 
-    def test_inicializacao_com_provider(self, mock_llm_provider_cls):
+    def test_inicializacao_com_provider(self):
         """Testa inicialização com provider customizado"""
-        provider = mock_llm_provider_cls("Teste")
+        provider = MockProvider()
         manager = LLMManager(provider=provider)
-
         assert manager.provider == provider
 
-    def test_generate_answer_com_fatos(self, mock_llm_manager):
-        """Testa geração de resposta com fatos"""
-        fatos = {"Renda: R$ 5000", "Perfil: moderado"}
-        resposta = mock_llm_manager.generate_answer("qual minha renda?", fatos)
+    def test_generate_answer_retorna_dict(self):
+        """Testa que generate_answer retorna dicionário"""
+        provider = MockProvider()
+        manager = LLMManager(provider=provider)
+        
+        messages = [{"role": "user", "content": "teste"}]
+        result = manager.generate_answer(messages)
+        
+        assert isinstance(result, dict)
+        assert "resposta" in result
+        assert "dados_extraidos" in result
 
-        assert resposta is not None
-        assert len(resposta) > 0
+    def test_generate_answer_com_resposta_valida(self):
+        """Testa geração com resposta válida"""
+        provider = MockProvider(json.dumps({
+            "resposta": "Sua renda é R$ 5.000",
+            "user_message": "qual minha renda",
+            "dados_extraidos": {
+                "renda_mensal": 5000.0,
+                "perfil_investidor": None,
+                "idade": None,
+                "profissao": None,
+                "patrimonio_total": None,
+                "reserva_emergencia_atual": None,
+                "metas": None
+            }
+        }))
+        manager = LLMManager(provider=provider)
+        
+        messages = [{"role": "user", "content": "qual minha renda"}]
+        result = manager.generate_answer(messages)
+        
+        assert "5.000" in result["resposta"]
+        assert result["dados_extraidos"]["renda_mensal"] == 5000.0
 
-    def test_generate_answer_sem_fatos(self, mock_llm_manager):
-        """Testa geração de resposta sem fatos"""
-        resposta = mock_llm_manager.generate_answer("olá", set())
+    def test_generate_answer_json_invalido(self):
+        """Testa erro com JSON inválido"""
+        provider = MockProvider("isso não é json válido")
+        manager = LLMManager(provider=provider)
+        
+        messages = [{"role": "user", "content": "teste"}]
+        
+        with pytest.raises(LLMError):
+            manager.generate_answer(messages)
 
-        assert resposta is not None
+    def test_generate_answer_resposta_vazia_usa_padrao(self):
+        """Testa que resposta vazia usa padrão"""
+        provider = MockProvider(json.dumps({
+            "resposta": "",
+            "user_message": "teste",
+            "dados_extraidos": {}
+        }))
+        manager = LLMManager(provider=provider)
+        
+        messages = [{"role": "user", "content": "teste"}]
+        result = manager.generate_answer(messages)
+        
+        assert len(result["resposta"]) > 0
+        assert "Desculpe" in result["resposta"] or "dificuldade" in result["resposta"]
 
-    def test_construir_prompt_com_fatos(self, mock_llm_manager):
-        """Testa construção de prompt com fatos"""
-        fatos = {"Renda: R$ 5000", "Idade: 30"}
-        prompt = mock_llm_manager._construir_prompt("teste", fatos)
-
-        assert "Renda: R$ 5000" in prompt
-        assert "Idade: 30" in prompt
-        assert "teste" in prompt
-        assert "NÃO pode" in prompt
-
-    def test_construir_prompt_sem_fatos(self, mock_llm_manager):
-        """Testa construção de prompt sem fatos"""
-        prompt = mock_llm_manager._construir_prompt("teste", set())
-
-        assert "Nenhuma informação" in prompt
-        assert "teste" in prompt
-
-    def test_resposta_padrao(self, mock_llm_manager):
+    def test_default_answer(self):
         """Testa resposta padrão"""
-        resposta = mock_llm_manager._resposta_padrao()
-
+        provider = MockProvider()
+        manager = LLMManager(provider=provider)
+        
+        resposta = manager._default_answer()
+        
         assert "Desculpe" in resposta or "dificuldade" in resposta
 
-    def test_gerar_boas_vindas_com_nome(self, mock_llm_manager):
-        """Testa geração de boas-vindas com nome"""
-        mensagem = mock_llm_manager.generate_answer_boas_vindas("João")
 
-        assert "João" in mensagem
-        assert "BIA" in mensagem
+class TestLLMManagerIntegration:
+    """Testes de integração (requerem provider real)"""
 
-    def test_gerar_boas_vindas_sem_nome(self, mock_llm_manager):
-        """Testa geração de boas-vindas sem nome"""
-        mensagem = mock_llm_manager.generate_answer_boas_vindas()
-
-        assert "BIA" in mensagem
-        assert "assistente" in mensagem.lower()
-
-    def test_generate_answer_vazia_retorna_padrao(self, mock_llm_provider, mock_llm_manager):
-        """Testa que resposta vazia retorna resposta padrão"""
-        mock_llm_provider.response = ""
-        resposta = mock_llm_manager.generate_answer("teste", set())
-
-        assert len(resposta) > 0
-        assert "Desculpe" in resposta or "dificuldade" in resposta
-
-    def test_prompt_contem_regras(self, mock_llm_manager):
-        """Testa que prompt contém regras importantes"""
-        prompt = mock_llm_manager._construir_prompt("teste", set())
-
-        assert "NÃO pode" in prompt
-        assert "recomendações" in prompt or "investimento" in prompt
-        assert "APENAS" in prompt
-
-    def test_prompt_contem_contexto_usuario(self, mock_llm_manager):
-        """Testa que prompt contém contexto do usuário"""
-        fatos = {"Nome: João", "Renda: 5000"}
-        prompt = mock_llm_manager._construir_prompt("teste", fatos)
-
-        assert "João" in prompt
-        assert "5000" in prompt
-
-
-class TestOllamaProvider:
-    """Testes para OllamaProvider"""
-
-    def test_inicializacao_default(self):
-        """Testa inicialização com valores padrão"""
-        provider = OllamaProvider()
-
-        assert provider.model is not None
-        assert provider.timeout > 0
-
-    def test_inicializacao_custom(self):
-        """Testa inicialização com valores customizados"""
-        provider = OllamaProvider(model="llama2", timeout=60)
-
-        assert provider.model == "llama2"
-        assert provider.timeout == 60
-
-    @pytest.mark.skipif(True, reason="Requer Ollama instalado")
-    def test_generate_answer_ollama_real(self):
-        """Testa geração real com Ollama (skip se não disponível)"""
-        provider = OllamaProvider()
-        resposta = provider.generate_answer("Olá")
-
-        assert resposta is not None
-        assert len(resposta) > 0
+    @pytest.mark.skip(reason="Requer API key configurada")
+    def test_groq_provider_real(self):
+        """Testa com Groq real (skip se não disponível)"""
+        from llm import GroqProvider
+        
+        provider = GroqProvider()
+        manager = LLMManager(provider=provider)
+        
+        messages = [
+            {"role": "system", "content": "Responda em JSON"},
+            {"role": "user", "content": "Olá"}
+        ]
+        result = manager.generate_answer(messages)
+        
+        assert result is not None

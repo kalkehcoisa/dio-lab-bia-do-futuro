@@ -4,10 +4,11 @@
 Definir indicadores, processos e procedimentos mensuráveis para avaliar qualidade, segurança, custo e desempenho do agente, com ligações claras ao código e aos testes do repositório.
 
 ## Fontes no projeto
-- Agente: src/app/agent.py  
-- Wrapper LLM (instrumentação): src/app/llm.py  
-- Pré-processamento e anonimização: src/app/data.py  
-- Testes e fixtures: tests/ — veja tests/test_llm.py e tests/test_validation.py
+- Agente: [src/app/agent.py](../src/app/agent.py)  
+- Wrapper LLM (instrumentação): [src/app/llm.py](../src/app/llm.py)  
+- Gerenciamento de dados: [src/app/data.py](../src/app/data.py)  
+- Validação: [src/app/validation.py](../src/app/validation.py)
+- Testes: [tests/](../tests/) — veja `test_llm.py`, `test_validation.py`, `test_agent.py`
 
 ---
 
@@ -43,13 +44,13 @@ Definir indicadores, processos e procedimentos mensuráveis para avaliar qualida
 ---
 
 ## Instrumentação prática (passos)
-1. No wrapper LLM (src/app/llm.py), registrar por requisição:
+1. No wrapper LLM (`src/app/llm.py`), registrar por requisição:
    - `request_id`, `timestamp`, `duration_ms`, `tokens_request`, `tokens_response`, `status`, `error` (se houver).
 2. Persistir logs/metrics em JSON/CSV ou enviar a um sistema de métricas (Prometheus).  
 3. Adicionar testes automatizados para:
    - contratos de prompt (prompt montado → formato esperado),
    - vazamento de dados (respostas a solicitações sensíveis),
-   - transformações de dados em src/app/data.py.
+   - transformações de dados em `src/app/data.py`.
 4. CI: rodar comandos
 ```bash
 pytest --maxfail=1 --disable-warnings -q
@@ -60,11 +61,12 @@ pytest --cov=src --cov-report=xml
 ---
 
 ## Testes recomendados
-- Unit: validar transformações e normalizações em src/app/data.py.  
-- Contract: fixtures que verificam o prompt composto e campos obrigatórios.  
-- Integration (LLM mockado): validar fluxo do agente em tests/test_llm.py.  
-- Functional / End-to-end: cenários reais cobrindo perguntas frequentes e edge-cases.  
-- Avaliação humana (HITL): 3–5 avaliadores, N cenários, notas 1–5 para Assertividade / Clareza / Segurança.
+- **Unit**: validar transformações e normalizações em `src/app/data.py` → `tests/test_data.py`
+- **Validation**: testar regras de validação → `tests/test_validation.py`
+- **Agent**: testar lógica do agente → `tests/test_agent.py`
+- **LLM (mockado)**: validar fluxo do agente → `tests/test_llm.py`
+- **Functional**: cenários end-to-end → `tests/test_functional.py`
+- **Avaliação humana (HITL)**: 3–5 avaliadores, N cenários, notas 1–5 para Assertividade / Clareza / Segurança
 
 ---
 
@@ -91,6 +93,7 @@ pytest --cov=src --cov-report=xml
 ---
 
 ## Próximos passos sugeridos
-1. Instrumentar logs no wrapper LLM (src/app/llm.py).  
+1. Instrumentar logs no wrapper LLM (`src/app/llm.py`).  
 2. Adicionar contract tests e testes de vazamento em `tests/`.  
 3. Configurar coleta automática de tokens e gerar relatório semanal de custo.
+4. Executar testes com `pytest --cov=src --cov-report=html` para verificar cobertura.

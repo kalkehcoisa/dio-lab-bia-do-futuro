@@ -5,93 +5,94 @@ Checklist consolidada e refinada, mantendo o escopo original do desafio e organi
 ---
 
 ## 📌 Comportamento do Agente
-- [ ] Atua de forma **proativa**, não apenas reativa
-- [ ] Sugere próximos passos ou reflexões relevantes ao contexto
-- [ ] Personaliza respostas com base nas informações fornecidas
-- [ ] Atua de forma consultiva (cocriação, não respostas prontas)
-- [ ] Mantém coerência de comportamento ao longo da conversa
+- [x] Atua de forma **proativa**, não apenas reativa
+- [x] Sugere próximos passos ou reflexões relevantes ao contexto
+- [x] Personaliza respostas com base nas informações fornecidas
+- [x] Atua de forma consultiva (cocriação, não respostas prontas)
+- [x] Mantém coerência de comportamento ao longo da conversa
 
 ---
 
 ## 💬 Interação e Linguagem Natural
-- [ ] Compreensão de linguagem natural (NLP)
-- [ ] Respostas claras, coerentes e contextualizadas
-- [ ] Manutenção de contexto durante a sessão
-- [ ] Linguagem acessível, sem jargões desnecessários
-- [ ] Capacidade de pedir esclarecimentos quando necessário
+- [x] Compreensão de linguagem natural (NLP)
+- [x] Respostas claras, coerentes e contextualizadas
+- [x] Manutenção de contexto durante a sessão
+- [x] Linguagem acessível, sem jargões desnecessários
+- [x] Capacidade de pedir esclarecimentos quando necessário
 
 ---
 
 ## 🧠 IA Generativa
-- [ ] Uso explícito de modelo de linguagem (LLM)
-- [ ] Prompt base bem definido
-- [ ] Prompt com restrições claras de escopo
-- [ ] Separação entre geração de texto e regras de negócio
-- [ ] Tratamento explícito para perguntas fora do domínio
+- [x] Uso explícito de modelo de linguagem (LLM) — Groq API (Llama 3.3 70B)
+- [x] Prompt base bem definido — `SYSTEM_PROMPT` em `src/app/agent.py`
+- [x] Prompt com restrições claras de escopo
+- [x] Separação entre geração de texto e regras de negócio
+- [x] Tratamento explícito para perguntas fora do domínio
 
 ---
 
 ## 📊 Funcionalidades Principais
-- [ ] FAQs inteligentes (respostas dinâmicas e contextualizadas)
-- [ ] Simulações financeiras simples
-- [ ] Cálculos executados de forma determinística (Python)
-- [ ] Explicação clara dos resultados das simulações
-- [ ] Explicação de produtos financeiros comuns
-- [ ] Nenhuma recomendação financeira definitiva
+- [x] FAQs inteligentes (respostas dinâmicas e contextualizadas)
+- [x] Simulações financeiras simples — LLM faz cálculos diretamente (prompt em `agent.py`)
+- [x] Cálculos executados pelo LLM — parcelamento, juros compostos, reserva, etc.
+- [x] Explicação clara dos resultados (prompt instrui a explicar metodologia)
+- [x] Explicação de produtos financeiros comuns
+- [x] Nenhuma recomendação financeira definitiva — bloqueio de termos em `config.py`
 
 ---
 
 ## 🧠 Contexto e Personalização
-- [ ] Persistência de contexto ao longo da conversa
-- [ ] Uso apenas de dados fornecidos pelo usuário
-- [ ] Não assumir valores ou informações ausentes
-- [ ] Solicitação explícita de dados obrigatórios
-- [ ] Contexto utilizado para ajustar respostas e exemplos
+- [x] Persistência de contexto ao longo da conversa — `_squash_history()` em `agent.py`
+- [x] Uso apenas de dados fornecidos pelo usuário — `_extract_facts()` usa só dados confirmados
+- [x] Não assumir valores ou informações ausentes — prompt instrui a usar `null`
+- [x] Solicitação explícita de dados obrigatórios
+- [x] Contexto utilizado para ajustar respostas e exemplos — fatos injetados no prompt
 
 ---
 
 ## 🔐 Segurança e Anti-Alucinação
-- [ ] Escopo do agente claramente delimitado
-- [ ] Estratégias documentadas de mitigação de alucinação
-- [ ] LLM não gera valores numéricos críticos
-- [ ] Respostas explicam como foram obtidas
-- [ ] Declaração explícita de incerteza quando aplicável
-- [ ] Recusa segura de perguntas fora do escopo
+- [x] Escopo do agente claramente delimitado — `TERMOS_PROIBIDOS` em `config.py`
+- [x] Estratégias documentadas de mitigação de alucinação — `01-documentacao-agente.md`
+- [x] LLM não gera valores numéricos críticos — extrai do usuário, valida em `validation.py`
+- [x] Respostas explicam como foram obtidas — prompt instrui a descrever metodologia
+- [x] Declaração explícita de incerteza quando aplicável
+- [x] Recusa segura de perguntas fora do escopo
 
 ---
 
 ## 🏗 Arquitetura da Solução
-- [ ] Arquitetura geral documentada
-- [ ] Diagrama da solução (ex: Mermaid)
-- [ ] Componentes bem definidos
-- [ ] Separação clara entre interface, IA e lógica
-- [ ] Fluxo de dados e decisão descrito
+- [x] Arquitetura geral documentada — `01-documentacao-agente.md`
+- [x] Diagrama da solução (Mermaid) — `01-documentacao-agente.md`
+- [x] Componentes bem definidos — tabela em `01-documentacao-agente.md`
+- [x] Separação clara entre interface, IA e lógica — `main.py`, `llm.py`, `agent.py`, `data.py`
+- [x] Fluxo de dados e decisão descrito
 
 ---
 
 ## 🛠 Implementação
-- [ ] Código-fonte organizado e legível
-- [ ] Estrutura de pastas clara
-- [ ] Dependências documentadas
-- [ ] Instruções de execução do projeto
-- [ ] Interface simples para interação (chat)
-- [ ] Projeto fácil de executar localmente
+- [x] Código-fonte organizado e legível — `src/app/`
+- [x] Estrutura de pastas clara — documentada no `README.md`
+- [x] Dependências documentadas — `src/app/requirements.txt`
+- [x] Instruções de execução do projeto — `README.md`
+- [x] Interface simples para interação (chat) — Gradio em `main.py`
+- [x] Projeto fácil de executar localmente — `python main.py`
 
 ---
 
 ## 📄 Documentação e Entrega
-- [ ] README.md completo
-- [ ] Caso de uso bem definido (problema, solução, público-alvo)
-- [ ] Persona do agente documentada
-- [ ] Tom de voz e exemplos de linguagem
-- [ ] Arquitetura descrita
-- [ ] Segurança e limitações documentadas
-- [ ] Repositório público no GitHub
+- [x] README.md completo
+- [x] Caso de uso bem definido (problema, solução, público-alvo) — `01-documentacao-agente.md`
+- [x] Persona do agente documentada — BIA em `01-documentacao-agente.md`
+- [x] Tom de voz e exemplos de linguagem — `01-documentacao-agente.md`
+- [x] Arquitetura descrita — diagrama Mermaid em `01-documentacao-agente.md`
+- [x] Segurança e limitações documentadas — `01-documentacao-agente.md`
+- [x] Repositório público no GitHub — [Repositório](https://github.com/kalkehcoisa/dio-lab-bia-do-futuro)
 
 ---
 
 ## 🧪 Demonstração
-- [ ] Exemplos reais de interação
-- [ ] Demonstração de uso de contexto
-- [ ] Demonstração de simulação financeira
-- [ ] Evidência de funcionamento (prints, logs ou vídeo)
+- [x] Exemplos reais de interação — `03-prompts.md`
+- [x] Demonstração de uso de contexto — interface Gradio com botão "Mostrar dados"
+- [x] Demonstração de simulação financeira — LLM calcula e explica diretamente
+- [x] Evidência de funcionamento — `docs/06-evidencias.md`
+- [x] Testes funcionais realizados — `tests/test_functional.py`

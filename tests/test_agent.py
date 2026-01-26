@@ -1,259 +1,234 @@
 """
 Testes para o agente financeiro principal
 """
+import pytest
+import sys
+from pathlib import Path
 
-class TestFinancialAgent:
-    """Testes para FinancialAgent"""
+sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "app"))
+
+
+class TestFinancialAgentInit:
+    """Testes de inicialização do FinancialAgent"""
 
     def test_inicializacao(self, mock_agent):
-        """Testa inicialização do mock_agente"""
+        """Testa inicialização do agente"""
         assert mock_agent is not None
-        assert mock_agent.usuario is not None
-        assert mock_agent.pendente_confirmacao is None
+        assert mock_agent.user is not None
+        assert mock_agent.data_manager is not None
+        assert mock_agent.validator is not None
+        assert mock_agent.llm_manager is not None
 
-    def test_eh_confirmacao_sim(self, mock_agent):
-        """Testa detecção de confirmação 'sim'"""
-        assert mock_agent.eh_confirmacao("sim") is True
-        assert mock_agent.eh_confirmacao("SIM") is True
-        assert mock_agent.eh_confirmacao("  sim  ") is True
+    def test_usuario_inicial_vazio(self, mock_agent):
+        """Testa que usuário inicial tem estrutura padrão"""
+        user = mock_agent.user
+        assert "renda_mensal" in user
+        assert "perfil_investidor" in user
+        assert "metas" in user
+        assert isinstance(user["metas"], list)
 
-    def test_eh_confirmacao_ok(self, mock_agent):
-        """Testa detecção de confirmação 'ok'"""
-        assert mock_agent.eh_confirmacao("ok") is True
-        assert mock_agent.eh_confirmacao("OK") is True
 
-    def test_eh_confirmacao_confirmo(self, mock_agent):
-        """Testa detecção de confirmação 'confirmo'"""
-        assert mock_agent.eh_confirmacao("confirmo") is True
-        assert mock_agent.eh_confirmacao("pode salvar") is True
+class TestWelcomeMessage:
+    """Testes para mensagem de boas-vindas"""
 
-    def test_eh_confirmacao_negativo(self, mock_agent):
-        """Testa detecção de não-confirmação"""
-        assert mock_agent.eh_confirmacao("não") is False
-        assert mock_agent.eh_confirmacao("teste") is False
-        assert mock_agent.eh_confirmacao("talvez") is False
-
-    def test_eh_negacao_nao(self, mock_agent):
-        """Testa detecção de negação 'não'"""
-        assert mock_agent.eh_negacao("não") is True
-        assert mock_agent.eh_negacao("nao") is True
-        assert mock_agent.eh_negacao("NÃO") is True
-
-    def test_eh_negacao_cancelar(self, mock_agent):
-        """Testa detecção de negação 'cancelar'"""
-        assert mock_agent.eh_negacao("cancelar") is True
-        assert mock_agent.eh_negacao("cancel") is True
-
-    def test_formatar_confirmacao_renda(self, mock_agent):
-        """Testa formatação de confirmação com renda"""
-        dados = {"renda_mensal": 5000.00}
-        mensagem = mock_agent.formatar_confirmacao(dados)
-
-        # Aceita formatos: 5000, 5.000, 5,000
-        assert any(fmt in mensagem for fmt in ["5000", "5.000", "5,000"])
-        assert "Renda" in mensagem
-        assert "sim ou não" in mensagem.lower()
-
-    def test_formatar_confirmacao_perfil(self, mock_agent):
-        """Testa formatação de confirmação com perfil"""
-        dados = {"perfil_investidor": "moderado"}
-        mensagem = mock_agent.formatar_confirmacao(dados)
-
-        assert "moderado" in mensagem.lower()
-        assert "Perfil" in mensagem
-
-    def test_formatar_confirmacao_metas(self, mock_agent):
-        """Testa formatação de confirmação com metas"""
-        dados = {
-            "metas": [{
-                "meta": "Comprar carro",
-                "valor_necessario": 30000.00,
-                "prazo": "2025"
-            }]
-        }
-        mensagem = mock_agent.formatar_confirmacao(dados)
-
-        assert "Comprar carro" in mensagem
-        assert "30,000" in mensagem or "30.000" in mensagem
-
-    def test_process_message_sem_dados(self, mock_agent):
-        """Testa processamento de mensagem sem dados extraíveis"""
-        resposta, usuario = mock_agent.process_message("olá, tudo bem?")
-
-        assert resposta is not None
-        assert len(resposta) > 0
-
-    def test_process_message_com_renda(self, mock_agent):
-        """Testa processamento de mensagem com renda"""
-        resposta, usuario = mock_agent.process_message("minha renda é 6000 reais")
-
-        assert "6,000" in resposta
-        assert "confirma" in resposta.lower() or "salvar" in resposta.lower()
-        assert mock_agent.pendente_confirmacao is not None
-
-    def test_process_message_com_perfil(self, mock_agent):
-        """Testa processamento de mensagem com perfil"""
-        resposta, usuario = mock_agent.process_message("sou conservador")
-
-        assert "conservador" in resposta.lower()
-        assert mock_agent.pendente_confirmacao is not None
-
-    def test_fluxo_confirmacao_positiva(self, mock_agent):
-        """Testa fluxo completo de confirmação positiva"""
-        # 1. Enviar dados
-        resposta1, _ = mock_agent.process_message("minha renda é 7000")
-        assert mock_agent.pendente_confirmacao is not None
-
-        # 2. Confirmar
-        resposta2, usuario = mock_agent.process_message("sim")
-        assert "confirmado" in resposta2.lower()
-        assert mock_agent.pendente_confirmacao is None
-        assert usuario["renda_mensal"] == 7000.0
-
-    def test_fluxo_confirmacao_negativa(self, mock_agent):
-        """Testa fluxo completo de confirmação negativa"""
-        # 1. Enviar dados
-        resposta1, usuario_antes = mock_agent.process_message("minha renda é 7000")
-        assert mock_agent.pendente_confirmacao is not None
-        renda_antes = usuario_antes.get("renda_mensal")
-
-        # 2. Negar
-        resposta2, usuario_depois = mock_agent.process_message("não")
-        assert "não salvei" in resposta2.lower()
-        assert mock_agent.pendente_confirmacao is None
-        assert usuario_depois.get("renda_mensal") == renda_antes
-
-    def test_processar_multiplos_dados(self, mock_agent):
-        """Testa processamento de múltiplos dados"""
-        resposta, usuario = mock_agent.process_message(
-            "tenho 35 anos, ganho 8000 por mês e sou moderado"
-        )
-
-        assert mock_agent.pendente_confirmacao is not None
-        assert "idade" in resposta.lower() or "35" in resposta
-        assert "8,000" in resposta
-
-    def test_processar_dados_invalidos(self, mock_agent):
-        """Testa processamento de dados inválidos"""
-        resposta, usuario = mock_agent.process_message("minha renda é -5000")
-
-        assert "precisa ser um valor positivo" in resposta.lower()
-        assert mock_agent.pendente_confirmacao is None
-
-    def test_processar_termo_proibido(self, mock_agent):
-        """Testa processamento com termo proibido"""
-        resposta, usuario = mock_agent.process_message("invista em bitcoin, minha renda é 5000")
-
-        assert "não posso" in resposta.lower() or "recomenda" in resposta.lower()
-
-    def test_obter_mensagem_boas_vindas(self, mock_agent):
-        """Testa obtenção de mensagem de boas-vindas"""
-        mensagem = mock_agent.obter_mensagem_boas_vindas()
-
+    def test_welcome_message_existe(self, mock_agent):
+        """Testa que mensagem de boas-vindas é gerada"""
+        mensagem = mock_agent.welcome_message()
         assert mensagem is not None
+        assert len(mensagem) > 0
+
+    def test_welcome_message_contem_bia(self, mock_agent):
+        """Testa que mensagem menciona BIA"""
+        mensagem = mock_agent.welcome_message()
         assert "BIA" in mensagem
 
-    def test_obter_resumo_perfil(self, mock_agent):
-        """Testa obtenção de resumo do perfil"""
-        resumo = mock_agent.obter_resumo_perfil()
+    def test_welcome_message_contem_exemplos(self, mock_agent):
+        """Testa que mensagem contém exemplos de perguntas"""
+        mensagem = mock_agent.welcome_message()
+        assert "exemplos" in mensagem.lower() or "perguntas" in mensagem.lower()
 
-        assert resumo is not None
-        assert "Resumo" in resumo or "Perfil" in resumo
 
-    def test_resetar_confirmacao_pendente(self, mock_agent):
-        """Testa reset de confirmação pendente"""
-        mock_agent.process_message("minha renda é 5000")
-        assert mock_agent.tem_confirmacao_pendente()
+class TestProcessMessage:
+    """Testes para processamento de mensagens"""
 
-        mock_agent.resetar_confirmacao_pendente()
-        assert not mock_agent.tem_confirmacao_pendente()
+    def test_process_message_retorna_string(self, mock_agent):
+        """Testa que process_message retorna string"""
+        resposta = mock_agent.process_message("olá", [])
+        assert isinstance(resposta, str)
+        assert len(resposta) > 0
 
-    def test_tem_confirmacao_pendente(self, mock_agent):
-        """Testa verificação de confirmação pendente"""
-        assert not mock_agent.tem_confirmacao_pendente()
-
-        mock_agent.process_message("minha renda é 5000")
-        assert mock_agent.tem_confirmacao_pendente()
-
-    def test_confirmacao_ambigua(self, mock_agent):
-        """Testa resposta ambígua durante confirmação"""
-        # 1. Enviar dados
-        mock_agent.process_message("minha renda é 5000")
-
-        # 2. Resposta ambígua
-        resposta, _ = mock_agent.process_message("talvez")
-
-        assert "não entendi" in resposta.lower() or "sim ou não" in resposta.lower()
-        assert mock_agent.tem_confirmacao_pendente()
-
-    def test_validacao_consistencia_falha(self, mock_agent):
-        """Testa que validação de consistência impede salvamento"""
-        # Configura cenário: reserva > patrimônio (inválido)
-        mock_agent.usuario["patrimonio_total"] = 10000.00
-
-        resposta, _ = mock_agent.process_message("minha reserva de emergência é 15000")
-        mock_agent.process_message("sim")
-
-        # Reserva não deve ser maior que patrimônio
-        # A validação deve impedir salvamento
-        assert mock_agent.usuario["reserva_emergencia_atual"] != 15000.00
-
-    def test_save_interaction(self, mock_agent):
-        """Testa que interações são salvas"""
-        # Processa mensagem
-        mock_agent.process_message("minha renda é 5000")
-
-        # Não deve levantar exceção
-        assert True
-
-    def test_process_message_multiplas_vezes(self, mock_agent):
-        """Testa processamento de múltiplas mensagens"""
-        mensagens = [
-            "olá",
-            "minha renda é 5000",
-            "sim",
-            "qual minha renda?",
-            "sou moderado"
+    def test_process_message_com_historico(self, mock_agent):
+        """Testa processamento com histórico"""
+        history = [
+            {"role": "user", "content": "oi"},
+            {"role": "assistant", "content": "olá!"}
         ]
+        resposta = mock_agent.process_message("como vai?", history)
+        assert resposta is not None
 
-        for msg in mensagens:
-            resposta, _ = mock_agent.process_message(msg)
-            assert resposta is not None
+    def test_process_message_historico_vazio(self, mock_agent):
+        """Testa processamento com histórico vazio"""
+        resposta = mock_agent.process_message("teste", [])
+        assert resposta is not None
 
-    def test_estado_apos_confirmacao(self, mock_agent):
-        """Testa que estado é limpo após confirmação"""
-        # Enviar e confirmar
-        mock_agent.process_message("minha renda é 5000")
-        assert mock_agent.tem_confirmacao_pendente()
 
-        mock_agent.process_message("sim")
-        assert not mock_agent.tem_confirmacao_pendente()
+class TestExtractFacts:
+    """Testes para extração de fatos do usuário"""
 
-        # Nova interação não deve ter pendência
-        mock_agent.process_message("olá")
-        assert not mock_agent.tem_confirmacao_pendente()
+    def test_extract_facts_usuario_vazio(self, mock_agent):
+        """Testa extração de fatos com usuário vazio"""
+        fatos = mock_agent._extract_facts({})
+        assert fatos == set()
 
-    def test_idade_atualizada(self, mock_agent):
-        """Testa atualização de idade"""
-        resposta, _ = mock_agent.process_message("tenho 40 anos")
-        assert mock_agent.tem_confirmacao_pendente()
+    def test_extract_facts_com_renda(self, mock_agent, mock_usuario):
+        """Testa extração de renda"""
+        fatos = mock_agent._extract_facts(mock_usuario)
+        assert any("Renda" in f for f in fatos)
+        assert any("5" in f for f in fatos)
 
-        mock_agent.process_message("sim")
-        assert mock_agent.usuario["idade"] == 40
+    def test_extract_facts_com_idade(self, mock_agent, mock_usuario):
+        """Testa extração de idade"""
+        fatos = mock_agent._extract_facts(mock_usuario)
+        assert any("32" in f for f in fatos)
 
-    def test_profissao_atualizada(self, mock_agent):
-        """Testa atualização de profissão"""
-        resposta, _ = mock_agent.process_message("sou Engenheiro")
+    def test_extract_facts_com_perfil_confirmado(self, mock_agent, mock_usuario):
+        """Testa extração de perfil confirmado"""
+        fatos = mock_agent._extract_facts(mock_usuario)
+        assert any("moderado" in f.lower() for f in fatos)
 
-        if mock_agent.tem_confirmacao_pendente():
-            mock_agent.process_message("sim")
-            assert mock_agent.usuario["profissao"] == "Engenheiro"
+    def test_extract_facts_sem_perfil_nao_confirmado(self, mock_agent):
+        """Testa que perfil não confirmado não é extraído"""
+        usuario = {
+            "perfil_investidor": {
+                "valor": "conservador",
+                "confirmado": False
+            }
+        }
+        fatos = mock_agent._extract_facts(usuario)
+        assert not any("conservador" in f.lower() for f in fatos)
 
-    def test_meta_adicionada(self, mock_agent):
-        """Testa adição de meta"""
-        metas_iniciais = len(mock_agent.usuario.get("metas", []))
+    def test_extract_facts_com_metas(self, mock_agent, mock_usuario):
+        """Testa extração de metas"""
+        fatos = mock_agent._extract_facts(mock_usuario)
+        assert any("Meta" in f for f in fatos)
 
-        resposta, _ = mock_agent.process_message("meta de juntar 20000 até 2026")
-        mock_agent.process_message("sim")
 
-        assert len(mock_agent.usuario["metas"]) > metas_iniciais
+class TestSanitizeHistory:
+    """Testes para sanitização do histórico"""
+
+    def test_sanitize_history_remove_campos_extras(self, mock_agent):
+        """Testa que campos extras são removidos"""
+        history = [
+            {"role": "user", "content": "oi", "extra": "campo"},
+            {"role": "assistant", "content": "olá", "outro": "valor"}
+        ]
+        sanitized = mock_agent._sanitize_history(history)
+        
+        for msg in sanitized:
+            assert "extra" not in msg
+            assert "outro" not in msg
+            assert "role" in msg
+            assert "content" in msg
+
+    def test_sanitize_history_mantem_role_content(self, mock_agent):
+        """Testa que role e content são mantidos"""
+        history = [{"role": "user", "content": "teste"}]
+        sanitized = mock_agent._sanitize_history(history)
+        
+        assert sanitized[0]["role"] == "user"
+        assert sanitized[0]["content"] == "teste"
+
+
+class TestSquashHistory:
+    """Testes para compactação do histórico"""
+
+    def test_squash_history_pequeno_nao_compacta(self, mock_agent):
+        """Testa que histórico pequeno não é compactado"""
+        history = [{"role": "user", "content": f"msg{i}"} for i in range(5)]
+        result = mock_agent._squash_history(history, max_messages=20)
+        assert len(result) == 5
+
+    def test_squash_history_grande_compacta(self, mock_agent):
+        """Testa que histórico grande é compactado"""
+        history = [
+            {"role": "user" if i % 2 == 0 else "assistant", "content": f"msg{i}"}
+            for i in range(25)
+        ]
+        result = mock_agent._squash_history(history, max_messages=20, keep_last=6)
+        assert len(result) < 25
+
+    def test_squash_history_preserva_recentes(self, mock_agent):
+        """Testa que mensagens recentes são preservadas"""
+        history = [
+            {"role": "user" if i % 2 == 0 else "assistant", "content": f"msg{i}"}
+            for i in range(25)
+        ]
+        result = mock_agent._squash_history(history, max_messages=20, keep_last=6)
+        
+        # Últimas 6 devem estar intactas
+        assert result[-1]["content"] == "msg24"
+        assert result[-6]["content"] == "msg19"
+
+
+class TestMakePrompt:
+    """Testes para construção do prompt"""
+
+    def test_make_prompt_contem_system(self, mock_agent):
+        """Testa que prompt contém system message"""
+        messages = mock_agent._make_prompt("teste", [], set())
+        assert messages[0]["role"] == "system"
+
+    def test_make_prompt_contem_user_message(self, mock_agent):
+        """Testa que prompt contém mensagem do usuário"""
+        messages = mock_agent._make_prompt("minha pergunta", [], set())
+        assert any(m["content"] == "minha pergunta" for m in messages)
+
+    def test_make_prompt_com_fatos(self, mock_agent):
+        """Testa que fatos são incluídos no prompt"""
+        fatos = {"Renda: R$ 5000", "Idade: 30"}
+        messages = mock_agent._make_prompt("teste", [], fatos)
+        
+        # Deve haver mensagem system com contexto
+        context_msgs = [m for m in messages if "INFORMAÇÕES" in m.get("content", "")]
+        assert len(context_msgs) > 0
+
+    def test_make_prompt_inclui_historico(self, mock_agent):
+        """Testa que histórico é incluído"""
+        history = [
+            {"role": "user", "content": "msg anterior"},
+            {"role": "assistant", "content": "resposta anterior"}
+        ]
+        messages = mock_agent._make_prompt("nova msg", history, set())
+        
+        assert any("msg anterior" in m.get("content", "") for m in messages)
+
+
+class TestDataExtraction:
+    """Testes para extração de dados via LLM"""
+
+    def test_extrai_renda(self, mock_agent_with_extraction):
+        """Testa extração de renda da mensagem"""
+        mock_agent_with_extraction.process_message("minha renda é 5000", [])
+        assert mock_agent_with_extraction.user["renda_mensal"] == 5000.0
+
+    def test_dados_persistidos(self, mock_agent_with_extraction):
+        """Testa que dados são persistidos"""
+        mock_agent_with_extraction.process_message("minha renda é 5000", [])
+        
+        # Recarrega do arquivo
+        user_reloaded = mock_agent_with_extraction.data_manager.load_user()
+        assert user_reloaded["renda_mensal"] == 5000.0
+
+
+class TestObterResumoPerfil:
+    """Testes para resumo do perfil"""
+
+    def test_resumo_perfil_existe(self, mock_agent):
+        """Testa que resumo é gerado"""
+        resumo = mock_agent.obter_resumo_perfil()
+        assert resumo is not None
+
+    def test_resumo_perfil_vazio(self, mock_agent):
+        """Testa resumo de perfil vazio"""
+        resumo = mock_agent.obter_resumo_perfil()
+        assert "Resumo" in resumo or "vazio" in resumo.lower()

@@ -1,26 +1,26 @@
-# 🤖 Assessor Financeiro Pessoal com IA
+# 🤖 BIA — Assessora Financeira Pessoal com IA
 
 ## 📌 Visão Geral do Projeto
 
-Este projeto apresenta um **Assessor Financeiro Pessoal Conversacional**, uma experiência digital guiada por **IA generativa**, focada em **educação financeira**, **simulações simples** e **boas práticas de relacionamento com o usuário**.
+Este projeto apresenta a **BIA (Assessora Financeira Pessoal Conversacional)**, uma experiência digital guiada por **IA generativa**, focada em **educação financeira**, **organização de perfil financeiro** e **boas práticas de relacionamento com o usuário**.
 
-A solução foi concebida para demonstrar a aplicação prática de conceitos de **inteligência artificial**, **Python**, **processamento de linguagem natural**, **modelagem de dados simples** e **experiência do usuário (UX)**, conforme proposto no desafio.
+A solução foi concebida para demonstrar a aplicação prática de conceitos de **inteligência artificial**, **Python**, **processamento de linguagem natural**, **modelagem de dados simples** e **experiência do usuário (UX)**, conforme proposto no desafio DIO.
 
-O assistente interage em linguagem natural, mantém contexto durante a conversa e oferece respostas claras, seguras e personalizadas, sempre com caráter educativo e demonstrativo.
+O assistente interage em linguagem natural, mantém contexto durante a conversa, extrai e persiste dados do perfil do usuário, e oferece respostas claras, seguras e personalizadas, sempre com caráter educativo.
 
 ---
 
 ## 🎯 Objetivo
 
-Criar um agente conversacional que atue como um **assessor financeiro pessoal**, capaz de:
+Criar um agente conversacional que atue como uma **assessora financeira pessoal**, capaz de:
 
 * Compreender perguntas em linguagem natural
-* Manter um perfil financeiro simples do usuário ao longo da conversa
-* Realizar simulações financeiras básicas usando Python
+* Manter e atualizar um perfil financeiro do usuário ao longo da conversa
+* Extrair automaticamente dados mencionados (renda, metas, patrimônio, etc.)
 * Explicar conceitos e produtos financeiros de forma acessível
 * Aplicar boas práticas de UX e comunicação responsável
 
-A proposta **não é fornecer aconselhamento financeiro definitivo**, mas sim ajudar o usuário a entender cenários, conceitos e possíveis impactos financeiros.
+A proposta **não é fornecer aconselhamento financeiro definitivo**, mas sim ajudar o usuário a entender cenários, conceitos e organizar suas informações financeiras.
 
 ---
 
@@ -28,47 +28,39 @@ A proposta **não é fornecer aconselhamento financeiro definitivo**, mas sim aj
 
 ### 💬 Conversa em Linguagem Natural
 
-O usuário pode interagir livremente com o assistente, fazendo perguntas como:
+O usuário pode interagir livremente com a assistente, fazendo perguntas como:
 
-* “Consigo parcelar uma compra de R$ 3.000?”
-* “Vale mais pagar à vista ou parcelar?”
-* “Como funcionam os juros do cartão de crédito?”
+* "Consigo parcelar uma compra de R$ 3.000?"
+* "Vale mais pagar à vista ou parcelar?"
+* "Como funcionam os juros do cartão de crédito?"
+* "Quais investimentos existem para quem ganha um salário mínimo?"
 
 A IA interpreta a intenção antes de responder, oferecendo explicações contextualizadas.
 
 ---
 
-### 👤 Perfil Financeiro Simples
+### 👤 Perfil Financeiro Persistente
 
-Durante a conversa, o assistente pode armazenar informações como:
+Durante a conversa, a BIA extrai e armazena automaticamente informações como:
 
-* renda mensal (opcional)
-* objetivos financeiros
-* valores mencionados anteriormente
+* Nome, idade, profissão
+* Renda mensal
+* Perfil de investidor (conservador, moderado, arrojado)
+* Patrimônio total e reserva de emergência
+* Metas financeiras com valores e prazos
 
-Esse contexto é utilizado para tornar as respostas mais coerentes e personalizadas dentro da sessão.
-
----
-
-### 🧮 Simulações Financeiras Educativas
-
-A solução realiza cálculos reais em Python para:
-
-* parcelamento com juros simples
-* comparação entre pagamento à vista e parcelado
-* projeções financeiras básicas
-
-Os resultados são sempre explicados de forma transparente, mostrando como o cálculo foi feito.
+Os dados são persistidos em JSON e utilizados para personalizar as respostas.
 
 ---
 
-### 📚 Educação Financeira e Explicação de Produtos
+### 📚 Educação Financeira
 
-O assistente explica conceitos e produtos financeiros comuns, como:
+A assistente explica conceitos e produtos financeiros comuns, como:
 
-* cartão de crédito
-* empréstimo pessoal
-* juros e parcelamentos
+* Cartão de crédito e juros
+* Empréstimo pessoal
+* Reserva de emergência
+* Perfis de investidor
 
 As respostas priorizam clareza, linguagem simples e exemplos práticos.
 
@@ -77,9 +69,10 @@ As respostas priorizam clareza, linguagem simples e exemplos práticos.
 ### 🔐 Boas Práticas de UX e Segurança
 
 * Linguagem acessível e não técnica
-* Avisos claros de que se trata de simulações educativas
-* Nenhuma solicitação de dados sensíveis
+* Avisos claros de que se trata de orientação educativa
+* Nenhuma solicitação de dados sensíveis (CPF, senhas)
 * Nenhuma recomendação financeira definitiva
+* Bloqueio de termos proibidos relacionados a aconselhamento de investimentos
 
 ---
 
@@ -87,20 +80,59 @@ As respostas priorizam clareza, linguagem simples e exemplos práticos.
 
 Para manter o foco e a segurança da solução, não fazem parte deste projeto:
 
-* integração com APIs bancárias reais
-* investimentos ou recomendação de ativos
-* autenticação de usuários
-* armazenamento persistente de dados sensíveis
+* Integração com APIs bancárias reais
+* Investimentos ou recomendação de ativos específicos
+* Autenticação de usuários
+* Armazenamento de dados sensíveis (CPF, senhas, etc.)
 
 ---
 
 ## 🛠 Tecnologias Utilizadas
 
-* **Python**
-* **IA Generativa (LLM)**
-* **Processamento de Linguagem Natural**
-* **Lógica de simulação financeira**
-* **Interface conversacional simples**
+| Tecnologia | Uso |
+|------------|-----|
+| **Python 3.x** | Linguagem principal |
+| **Gradio** | Interface conversacional web |
+| **Groq API** | Provedor de LLM (Llama 3.3 70B) |
+| **JSON/CSV** | Persistência de dados do usuário |
+
+---
+
+## 🚀 Como Executar
+
+### Pré-requisitos
+
+- Python 3.10+
+- Conta na [Groq](https://console.groq.com/) para obter uma API key
+
+### Instalação
+
+```bash
+# Clone o repositório
+git clone <url-do-repositorio>
+cd dio-lab-bia-do-futuro
+
+# Crie e ative o ambiente virtual
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# Instale as dependências
+pip install -r src/app/requirements.txt
+
+# Configure a API key
+cd src/app
+echo "GROQ_API_KEY=sua-chave-aqui" > .env
+```
+
+### Execução
+
+```bash
+cd src/app
+python main.py
+```
+
+Acesse: http://localhost:7860
 
 ---
 
@@ -108,132 +140,91 @@ Para manter o foco e a segurança da solução, não fazem parte deste projeto:
 
 Ao utilizar a aplicação, o usuário consegue:
 
-* conversar naturalmente com o assistente
-* receber explicações claras e contextualizadas
-* simular cenários financeiros simples
-* perceber a integração prática entre IA, Python, dados e UX
+* Conversar naturalmente com a BIA
+* Ter seu perfil financeiro extraído e persistido automaticamente
+* Receber explicações claras e contextualizadas
+* Visualizar seus dados coletados na interface
+* Perceber a integração prática entre IA, Python, dados e UX
 
 ---
 
-📄 **Documentação do agente:** [`docs/01-documentacao-agente.md`](./docs/01-documentacao-agente.md)
+## 📚 Documentação
 
-
-
-### 2. Base de Conhecimento
-
-Utilize os **dados mockados** disponíveis na pasta [`data/`](./data/) para alimentar seu agente:
-
-| Arquivo | Formato | Descrição |
-|---------|---------|-----------|
-| `transacoes.csv` | CSV | Histórico de transações do cliente |
-| `historico_atendimento.csv` | CSV | Histórico de atendimentos anteriores |
-| `perfil_investidor.json` | JSON | Perfil e preferências do cliente |
-| `produtos_financeiros.json` | JSON | Produtos e serviços disponíveis |
-
-Você pode adaptar ou expandir esses dados conforme seu caso de uso.
-
-📄 **Base de Conhecimento:** [`docs/02-base-conhecimento.md`](./docs/02-base-conhecimento.md)
+| Documento | Descrição |
+|-----------|-----------|
+| [01-documentacao-agente.md](./docs/01-documentacao-agente.md) | Caso de uso, persona e arquitetura |
+| [02-base-conhecimento.md](./docs/02-base-conhecimento.md) | Estratégia de dados e integração |
+| [03-prompts.md](./docs/03-prompts.md) | Engenharia de prompts e exemplos |
+| [04-metricas.md](./docs/04-metricas.md) | Avaliação e métricas |
+| [05-pitch.md](./docs/05-pitch.md) | Roteiro do pitch |
+| [06-evidencias.md](./docs/06-evidencias.md) | Evidências de funcionamento |
+| [checklist.md](./docs/checklist.md) | Checklist de validação |
 
 ---
 
-### 3. Prompts do Agente
-
-Documente os prompts que definem o comportamento do seu agente:
-
-- **System Prompt:** Instruções gerais de comportamento e restrições
-- **Exemplos de Interação:** Cenários de uso com entrada e saída esperada
-- **Tratamento de Edge Cases:** Como o agente lida com situações limite
-
-📄 **Template:** [`docs/03-prompts.md`](./docs/03-prompts.md)
-
----
-
-### 4. Aplicação Funcional
-
-Desenvolva um **protótipo funcional** do seu agente:
-
-- Chatbot interativo (sugestão: Streamlit, Gradio ou similar)
-- Integração com LLM (via API ou modelo local)
-- Conexão com a base de conhecimento
-
-📁 **Pasta:** [`src/`](./src/)
-
----
-
-### 5. Avaliação e Métricas
-
-Descreva como você avalia a qualidade do seu agente:
-
-**Métricas Sugeridas:**
-- Precisão/assertividade das respostas
-- Taxa de respostas seguras (sem alucinações)
-- Coerência com o perfil do cliente
-
-📄 **Template:** [`docs/04-metricas.md`](./docs/04-metricas.md)
-
----
-
-### 6. Pitch
-
-Grave um **pitch de 3 minutos** (estilo elevador) apresentando:
-
-- Qual problema seu agente resolve?
-- Como ele funciona na prática?
-- Por que essa solução é inovadora?
-
-📄 **Template:** [`docs/05-pitch.md`](./docs/05-pitch.md)
-
----
-
-## Ferramentas Sugeridas
-
-Todas as ferramentas abaixo possuem versões gratuitas:
-
-| Categoria | Ferramentas |
-|-----------|-------------|
-| **LLMs** | [ChatGPT](https://chat.openai.com/), [Copilot](https://copilot.microsoft.com/), [Gemini](https://gemini.google.com/), [Claude](https://claude.ai/), [Ollama](https://ollama.ai/) |
-| **Desenvolvimento** | [Streamlit](https://streamlit.io/), [Gradio](https://www.gradio.app/), [Google Colab](https://colab.research.google.com/) |
-| **Orquestração** | [LangChain](https://www.langchain.com/), [LangFlow](https://www.langflow.org/), [CrewAI](https://www.crewai.com/) |
-| **Diagramas** | [Mermaid](https://mermaid.js.org/), [Draw.io](https://app.diagrams.net/), [Excalidraw](https://excalidraw.com/) |
-
----
-
-## Estrutura do Repositório
+## 📁 Estrutura do Repositório
 
 ```
-📁 lab-agente-financeiro/
+📁 dio-lab-bia-do-futuro/
 │
-├── 📄 README.md
-│
-├── 📁 data/                          # Dados mockados para o agente
-│   ├── historico_atendimento.csv     # Histórico de atendimentos (CSV)
-│   ├── perfil_investidor.json        # Perfil do cliente (JSON)
-│   ├── produtos_financeiros.json     # Produtos disponíveis (JSON)
-│   └── transacoes.csv                # Histórico de transações (CSV)
+├── 📄 README.md                      # Este arquivo
+├── 📄 requirements-dev.txt           # Dependências de desenvolvimento
+├── 📄 pytest.ini                     # Configuração de testes
 │
 ├── 📁 docs/                          # Documentação do projeto
 │   ├── 01-documentacao-agente.md     # Caso de uso e arquitetura
 │   ├── 02-base-conhecimento.md       # Estratégia de dados
 │   ├── 03-prompts.md                 # Engenharia de prompts
 │   ├── 04-metricas.md                # Avaliação e métricas
-│   └── 05-pitch.md                   # Roteiro do pitch
+│   ├── 05-pitch.md                   # Roteiro do pitch
+│   └── checklist.md                  # Checklist de validação
 │
-├── 📁 src/                           # Código da aplicação
-│   └── app.py                        # (exemplo de estrutura)
+├── 📁 src/                           # Código-fonte
+│   ├── 📁 app/                       # Aplicação principal
+│   │   ├── __init__.py
+│   │   ├── main.py                   # Entry point (Gradio)
+│   │   ├── agent.py                  # Lógica do agente financeiro
+│   │   ├── llm.py                    # Integração com Groq/LLM
+│   │   ├── data.py                   # Gerenciamento de dados
+│   │   ├── validation.py             # Validação de dados
+│   │   ├── config.py                 # Configurações
+│   │   ├── exceptions.py             # Exceções customizadas
+│   │   ├── requirements.txt          # Dependências da aplicação
+│   │   └── 📁 data/                  # Dados persistidos (runtime)
+│   │       ├── usuario.json          # Perfil do usuário
+│   │       └── 📁 interacoes/        # Histórico de conversas
+│   │
+│   └── 📁 data/                      # Dados de exemplo/fixtures
+│       ├── usuario.json              # Exemplo de perfil
+│       ├── transacoes.csv            # Exemplo de transações
+│       ├── historico_financeiro.json # Exemplo de histórico
+│       └── 📁 interacoes/            # Exemplos de interações
 │
-├── 📁 assets/                        # Imagens e diagramas
-│   └── ...
+├── 📁 tests/                         # Testes automatizados
+│   ├── conftest.py                   # Fixtures do pytest
+│   ├── test_agent.py                 # Testes do agente
+│   ├── test_data.py                  # Testes de dados
+│   ├── test_llm.py                   # Testes do LLM
+│   ├── test_validation.py            # Testes de validação
+│   └── test_functional.py            # Testes funcionais
 │
-└── 📁 examples/                      # Referências e exemplos
-    └── README.md
+└── 📁 assets/                        # Imagens e diagramas
 ```
 
 ---
 
-## Dicas Finais
+## 🧪 Testes
 
-1. **Comece pelo prompt:** Um bom system prompt é a base de um agente eficaz
-2. **Use os dados mockados:** Eles garantem consistência e evitam problemas com dados sensíveis
-3. **Foque na segurança:** No setor financeiro, evitar alucinações é crítico
-4. **Teste cenários reais:** Simule perguntas que um cliente faria de verdade
-5. **Seja direto no pitch:** 3 minutos passam rápido, vá ao ponto
+```bash
+# Executar todos os testes
+pytest
+
+# Com cobertura
+pytest --cov=src --cov-report=html
+```
+
+---
+
+## 📝 Licença
+
+Este projeto foi desenvolvido para o desafio DIO — BIA do Futuro.
