@@ -9,7 +9,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src" / "app"))
 sys.path.insert(0, str(Path(__file__).parent))
 
-from tests.conftest import MockLLMProvider, MockLLMManager
+try:
+    from tests.conftest import MockLLMProvider, MockLLMManager
+except ImportError:
+    from conftest import MockLLMProvider, MockLLMManager
 
 
 class TestFluxoBasico:

@@ -37,7 +37,9 @@ class GroqProvider:
 class LLMManager:
     """Gerenciador de interações com LLM"""
 
-    def __init__(self, provider=GroqProvider()):
+    def __init__(self, provider=None):
+        if provider is None:
+            provider = GroqProvider()
         self.provider = provider
 
     def generate_answer(
