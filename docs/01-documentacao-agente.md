@@ -72,22 +72,63 @@ Tom **acessível e didático**, com linguagem simples e exemplos práticos. Evit
 ### Diagrama
 
 ```mermaid
-flowchart TD
-    A[Usuário] -->|Mensagem| B[Interface Gradio<br/>main.py]
-    B --> C[FinancialAgent<br/>agent.py]
-    C --> D[DataManager<br/>data.py]
-    D -->|Carrega perfil| C
-    C --> E[LLMManager<br/>llm.py]
-    E -->|API Groq| F[Llama 3.3 70B]
-    F -->|JSON estruturado| E
-    E --> C
-    C --> G[DataValidator<br/>validation.py]
-    G --> C
-    C -->|Extrai dados| D
-    D -->|Persiste JSON| H[(usuario.json)]
-    C --> B
-    B -->|Resposta| A
+flowchart TB
+    subgraph Interface["🖥️ Interface Web"]
+        Gradio["Gradio App<br/>main.py"]
+    end
+
+    subgraph Core["🧠 Núcleo do Agente"]
+        Agent["FinancialAgent<br/>agent.py"]
+        Prompt["System Prompt<br/>+ Context Builder"]
+    end
+
+    subgraph LLM["☁️ LLM Provider"]
+        LLMManager["LLMManager<br/>llm.py"]
+        Groq["GroqProvider<br/>Llama 3.3 70B"]
+    end
+
+    subgraph Data["💾 Camada de Dados"]
+        DataManager["DataManager<br/>data.py"]
+        Validator["DataValidator<br/>validation.py"]
+        Config["Config<br/>config.py"]
+    end
+
+    subgraph Storage["📁 Persistência"]
+        UserJSON["usuario.json<br/>Perfil do Usuário"]
+        Interacoes["interacoes/<br/>Histórico de Conversas"]
+    end
+
+    subgraph External["🌐 Externo"]
+        GroqAPI["Groq API"]
+    end
+
+    User((👤 Usuário)) --> Gradio
+    Gradio --> Agent
+    Agent --> Prompt
+    Agent --> LLMManager
+    Agent --> DataManager
+    Agent --> Validator
+    
+    LLMManager --> Groq
+    Groq --> GroqAPI
+    
+    DataManager --> UserJSON
+    DataManager --> Interacoes
+    DataManager --> Config
+    Validator --> Config
 ```
+
+### Fluxo de Processamento
+
+1. **Usuário** envia mensagem via interface Gradio
+2. **FinancialAgent** orquestra o processamento:
+   - Sanitiza e compacta histórico de conversa
+   - Extrai fatos do perfil do usuário
+   - Constrói prompt estruturado com contexto
+3. **LLMManager** envia para a API Groq (Llama 3.3 70B)
+4. **Resposta** é parseada (JSON) e validada
+5. **DataManager** persiste dados extraídos e histórico
+6. **Interface** exibe resposta ao usuário
 
 ---
 
