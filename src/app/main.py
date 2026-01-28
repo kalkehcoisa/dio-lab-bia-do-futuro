@@ -28,7 +28,6 @@ def render_user_data(show: bool, user: dict):
         )
 
     lines = ["### 📋 Dados do Usuário\n"]
-    print(user)
     for key, value in user.items():
         if key == "metas" and isinstance(value, list):
             lines.append("**Metas:**")
@@ -75,7 +74,8 @@ with gr.Blocks(title="Assessor Financeiro Pessoal") as app:
     )
     msg = gr.Textbox(
         label="Mensagem",
-        placeholder="Ex: minha renda mensal agora é 6500 reais"
+        placeholder="Ex: minha renda mensal agora é 6500 reais",
+        autofocus=True
     )
 
     gr.ChatInterface(

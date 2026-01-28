@@ -11,36 +11,7 @@ from exceptions import AgentException
 
 HISTORY_ALLOWED_KEYS = {"role", "content"}
 
-SYSTEM_PROMPT = """
-Você é BIA, uma assistente financeira educacional amigável e profissional.
-
-REGRAS IMPORTANTES:
-1. Você NÃO pode fazer recomendações de investimento específicos
-2. Você NÃO pode indicar produtos financeiros específicos
-3. Você DEVE usar APENAS os fatos fornecidos abaixo
-4. Se não tiver informação suficiente, diga claramente
-5. Seja educativa, não prescritiva
-6. Mantenha tom amigável e profissional
-
-INSTRUÇÕES:
-- Responda de forma clara e objetiva
-- Use apenas as informações disponíveis acima
-- Se precisar de mais informações, pergunte ao usuário
-- Não invente dados ou faça suposições
-- Seja útil mas não dê conselhos de investimento específicos
-
-SIMULAÇÕES FINANCEIRAS:
-Você pode fazer cálculos financeiros quando solicitado. Exemplos:
-- Parcelamento com/sem juros (use fórmula Price se houver juros)
-- Comparação à vista vs parcelado
-- Projeção de reserva de emergência
-- Juros compostos
-
-Ao fazer cálculos, mostre:
-1. O resultado principal em destaque
-2. Os valores usados no cálculo
-3. Uma breve explicação do raciocínio
-
+FORMAT_PROMPT = """
 Você DEVE responder SEMPRE em JSON válido.
 Nunca escreva texto fora do JSON.
 
@@ -68,6 +39,71 @@ Formato obrigatório:
   }
 }
 Importante: jamais responda em formato diferente do JSON acima.
+NUNCA ADICIONE TEXTO FORA DO JSON.
+"""
+
+SYSTEM_PROMPT = """
+Você é BIA, uma assistente financeira educacional amigável e profissional.
+
+REGRAS IMPORTANTES:
+1. Você NÃO pode fazer recomendações de investimento específicos
+2. Você NÃO pode indicar produtos financeiros específicos
+3. Você DEVE usar APENAS os fatos fornecidos abaixo
+4. Se não tiver informação suficiente, diga claramente
+5. Seja educativa, não prescritiva
+6. Mantenha tom amigável e profissional
+
+COMPORTAMENTO PROATIVO - COLETA DE INFORMAÇÕES:
+Você deve ser proativa na coleta de informações do usuário. A cada interação, verifique quais informações ainda faltam e tente coletar de forma natural e amigável.
+
+Informações essenciais que você DEVE coletar (em ordem de prioridade):
+1. nome - Pergunte logo no início se ainda não souber
+2. idade - Importante para adequar orientações
+3. profissao - Ajuda a entender contexto financeiro
+4. renda_mensal - Fundamental para qualquer orientação
+5. patrimonio_total - Para entender situação atual
+6. reserva_emergencia_atual - Para avaliar segurança financeira
+7. objetivo_principal - O que o usuário quer alcançar
+8. perfil_investidor - Conservador, moderado ou arrojado
+9. aceita_risco - Se está disposto a correr riscos
+10. metas - Objetivos específicos com valores e prazos
+
+ESTRATÉGIA DE COLETA:
+- Ao final de CADA resposta, se houver informações faltando, faça UMA pergunta para coletar um dado que ainda não tenha
+- Seja natural: "A propósito, você poderia me dizer sua idade? Isso me ajuda a dar orientações mais adequadas para sua fase de vida."
+- Explique brevemente por que precisa da informação
+- Não bombardeie com muitas perguntas de uma vez
+
+SUGESTÕES PROATIVAS:
+Ao final de suas respostas, quando apropriado, sugira:
+- Perguntas que o usuário poderia fazer: "Você gostaria de saber sobre...?"
+- Tópicos relacionados ao que foi discutido
+- Próximos passos no planejamento financeiro
+- Simulações úteis baseadas nas informações que você já tem
+
+Exemplos de sugestões:
+- "💡 Com sua renda, posso calcular quanto você deveria ter de reserva de emergência. Quer que eu faça essa simulação?"
+- "📊 Podemos conversar sobre como organizar seu orçamento mensal. O que acha?"
+- "🎯 Você mencionou que quer comprar um carro. Quer que eu calcule quanto precisaria poupar por mês?"
+
+INSTRUÇÕES:
+- Responda de forma clara e objetiva
+- Use apenas as informações disponíveis acima
+- Se precisar de mais informações, pergunte ao usuário
+- Não invente dados ou faça suposições
+- Seja útil mas não dê conselhos de investimento específicos
+
+SIMULAÇÕES FINANCEIRAS:
+Você pode fazer cálculos financeiros quando solicitado. Exemplos:
+- Parcelamento com/sem juros (use fórmula Price se houver juros)
+- Comparação à vista vs parcelado
+- Projeção de reserva de emergência
+- Juros compostos
+
+Ao fazer cálculos, mostre:
+1. O resultado principal em destaque
+2. Os valores usados no cálculo
+3. Uma breve explicação do raciocínio
 
 Use null quando a informação não estiver clara.
 Não invente valores.
@@ -89,6 +125,17 @@ Consigo parcelar uma compra de R$ 3.000?
 Vale mais pagar à vista ou parcelar?
 Como funcionam os juros do cartão de crédito?
 Quais investimentos existem para quem ganha um salário mínimo?
+"""
+
+SQUASH_INSTRUCTIONS ="""
+Você é um assistente que resume conversas.
+Resuma a conversa abaixo de forma concisa, mantendo os pontos principais
+e informações relevantes sobre o usuário. Responda apenas com o resumo.
+
+Responda em formato JSON:
+{
+    "resposta": string,
+}
 """
 
 
@@ -132,6 +179,7 @@ class FinancialAgent:
         context = "\n".join(f"- {f}" for f in facts if f)
 
         messages = [
+            {"role": "system", "content": FORMAT_PROMPT},
             {"role": "system", "content": SYSTEM_PROMPT},
             *history,
             {"role": "user", "content": user_message},
@@ -147,16 +195,15 @@ class FinancialAgent:
     def _squash_history(
             self,
             history: list[dict],
-            max_messages: int = 20,
-            keep_last: int = 6
+            max_messages: int = 5,
+            keep_last: int = 2
     ) -> list[dict]:
         """
         Compacta o histórico de conversa quando ultrapassa um limite definido.
 
         Estratégia:
         - Mantém as últimas `keep_last` mensagens intactas
-        - Junta (concatena) mensagens antigas do usuário e do assistente
-        - Substitui mensagens antigas por blocos compactados
+        - Envia mensagens antigas ao LLM para gerar um resumo
         - Preserva o formato compatível com ChatInterface / OpenAI / Groq
 
         Args:
@@ -174,42 +221,55 @@ class FinancialAgent:
         older_messages = history[:-keep_last]
         recent_messages = history[-keep_last:]
 
-        user_contents = []
-        assistant_contents = []
+        conversation_text = self._format_messages_as_text(older_messages)
 
-        for message in older_messages:
-            role = message.get("role")
+        summary_prompt = [
+            {
+                "role": "system",
+                "content": SQUASH_INSTRUCTIONS,
+            },
+            {
+                "role": "user",
+                "content": f"Resuma esta conversa:\n\n{conversation_text}"
+            }
+        ]
+
+        summary = self.llm_manager.generate_answer(summary_prompt)
+
+        compacted = [
+            {
+                "role": "system",
+                "content": f"Resumo da conversa anterior:\n{summary}"
+            }
+        ]
+
+        return compacted + recent_messages
+
+    def _format_messages_as_text(self, messages: list[dict]) -> str:
+        """Converte lista de mensagens em texto legível."""
+        lines = []
+        for message in messages:
+            role = message.get("role", "unknown")
             content = message.get("content")
 
             if not content:
                 continue
 
-            if role == "user":
-                user_contents.append(content)
-            elif role == "assistant":
-                assistant_contents.append(content)
+            if isinstance(content, list):
+                text_parts = [
+                    item.get("text", "")
+                    for item in content
+                    if isinstance(item, dict) and item.get("type") == "text"
+                ]
+                text = " ".join(text_parts).strip()
+            else:
+                text = str(content).strip()
 
-        compacted = []
+            if text:
+                role_label = "Usuário" if role == "user" else "Assistente"
+                lines.append(f"{role_label}: {text}")
 
-        if user_contents:
-            compacted.append({
-                "role": "user",
-                "content": (
-                    "Resumo de mensagens anteriores do usuário:\n"
-                    + "\n".join(user_contents)
-                ),
-            })
-
-        if assistant_contents:
-            compacted.append({
-                "role": "assistant",
-                "content": (
-                    "Resumo de respostas anteriores do assistente:\n"
-                    + "\n".join(assistant_contents)
-                ),
-            })
-
-        return compacted + recent_messages
+        return "\n".join(lines)
 
     def _extract_facts(self, usuario: dict[str, Any]) -> set[str]:
         """
@@ -296,16 +356,17 @@ class FinancialAgent:
             llm_answer = self.llm_manager.generate_answer(
                 messages_prompt=messages_prompt
             )
-            self.data_manager.save_interaction(
-                user_message=user_message,
-                answer=llm_answer['resposta'],
-                extracted_data=llm_answer['dados_extraidos'],
-            )
-            self.user = self.data_manager.update_user(
-                user=self.user,
-                extracted_data=llm_answer['dados_extraidos']
-            )
-            self.data_manager.save_user(user=self.user)
+            if 'dados_extraidos' in llm_answer:
+                self.data_manager.save_interaction(
+                    user_message=user_message,
+                    answer=llm_answer['resposta'],
+                    extracted_data=llm_answer['dados_extraidos'],
+                )
+                self.user = self.data_manager.update_user(
+                    user=self.user,
+                    extracted_data=llm_answer['dados_extraidos']
+                )
+                self.data_manager.save_user(user=self.user)
 
             return llm_answer['resposta']
         except AgentException:
@@ -318,19 +379,44 @@ class FinancialAgent:
         """Retorna mensagem de boas-vindas"""
         global EXAMPLES
         nome = self.user.get("nome") if self.user else None
-        return f"Olá, {nome}!" if nome else "Olá!" + """
+        
+        if nome:
+            greeting = f"Olá, {nome}! Que bom ver você de novo! 😊"
+        else:
+            greeting = "Olá! Sou a BIA, sua assistente financeira pessoal. 😊"
+        
+        missing_info = self._get_missing_info_prompt()
+        
+        return f"""{greeting}
 
-Sou a BIA, sua assistente financeira pessoal. Estou aqui para ajudar você a:
+Estou aqui para ajudar você a:
+📊 Organizar suas informações financeiras
+🎯 Acompanhar suas metas
+💡 Entender melhor seu perfil financeiro
+📚 Aprender sobre educação financeira
 
-Organizar suas informações financeiras
-Acompanhar suas metas
-Entender melhor seu perfil financeiro
-Aprender sobre educação financeira
-
-Alguns exemplos de perguntas:
+Alguns exemplos do que posso fazer:
 {EXAMPLES}
-
+{missing_info}
 Como posso ajudar você hoje?"""
+
+    def _get_missing_info_prompt(self) -> str:
+        """Retorna uma sugestão para coletar informação faltante"""
+        if not self.user:
+            return "\n🤝 Para começar, que tal me contar seu nome?\n"
+        
+        if not self.user.get("nome"):
+            return "\n🤝 Para começar, que tal me contar seu nome?\n"
+        if not self.user.get("idade"):
+            return "\n💬 Me conta, qual a sua idade? Isso me ajuda a dar orientações mais adequadas.\n"
+        if not self.user.get("profissao"):
+            return "\n💼 Qual é a sua profissão? Conhecer sua área de atuação me ajuda a entender melhor seu contexto.\n"
+        if not self.user.get("renda_mensal"):
+            return "\n💰 Qual é sua renda mensal aproximada? Com essa informação, posso fazer simulações mais precisas.\n"
+        if not self.user.get("objetivo_principal", {}).get("descricao"):
+            return "\n🎯 Qual seu principal objetivo financeiro no momento?\n"
+        
+        return ""
 
     def obter_resumo_perfil(self) -> str:
         """Retorna resumo do perfil do usuário"""

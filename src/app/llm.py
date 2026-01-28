@@ -27,7 +27,7 @@ class GroqProvider:
 
         except GroqError as e:
             if "rate limit" in str(e).lower():
-                raise LLMError("Rate limit atingido.")
+                raise LLMError("Rate limit atingido. Aguarde alguns minutos e tente novamente.")
             elif "authentication" in str(e).lower():
                 raise LLMError("API key inválida.")
             else:
@@ -59,19 +59,24 @@ class LLMManager:
         Raises:
             LLMError: Se houver erro na geração
         """
-        answer = self.provider.generate_answer(messages_prompt)
-        print("start:\n", answer, "\nend")
         try:
+            answer = self.provider.generate_answer(messages_prompt)
             json_answer = json.loads(answer)
+        except LLMError as e:
+            return {
+                "resposta": str(e)
+            }
         except json.JSONDecodeError:
             try:
-                response, json_answer = answer.split('\n{')
-                json_answer = json.loads(json_answer)
+                response, json_answer = answer.split('{', 1)
+                json_answer = json.loads("{" + json_answer)
                 json_answer['resposta'] = response
             except ValueError:
-                raise LLMError(
-                "Erro ao se comunicar com o servidor. Por favor, aguarde e tente novamente mais tarde."
-            )
+                return {
+                    "resposta": (
+                        "Erro ao se comunicar com o servidor. Por favor, aguarde e tente novamente mais tarde."
+                    )
+                }
         # Validação básica da resposta
         if not json_answer['resposta'] or len(json_answer['resposta'].strip()) == 0:
             json_answer['resposta'] = self._default_answer()
