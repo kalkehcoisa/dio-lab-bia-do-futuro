@@ -115,6 +115,29 @@ class DataManager:
         except Exception as e:
             raise DataSaveError(f"Erro ao salvar usuário: {e}")
 
+    def _validate_field(self, field: str, value) -> bool:
+        """
+        Valida se um valor é aceitável para um campo específico.
+
+        Returns:
+            True se válido, False se inválido
+        """
+        if value is None:
+            return False
+
+        validations = {
+            "idade": lambda v: isinstance(v, (int, float)) and 0 <= v <= 100,
+            "renda_mensal": lambda v: isinstance(v, (int, float)) and v > 0,
+            "patrimonio_total": lambda v: isinstance(v, (int, float)) and v >= 0,
+            "reserva_emergencia_atual": lambda v: isinstance(v, (int, float)) and v >= 0,
+        }
+
+        validator = validations.get(field)
+        if validator:
+            return validator(value)
+
+        return True
+
     def update_user(self, user: dict, extracted_data: dict) -> dict:
         """
         Atualiza o dicionário do usuário com os dados extraídos pela LLM.
@@ -123,20 +146,30 @@ class DataManager:
         - Ignora campos com valor None
         - Atualiza apenas campos existentes
         - Evita duplicidade de metas (baseado no campo 'meta')
+        - Valida dados antes de salvar
         """
 
         # Campos simples
         for field in (
+            "nome",
             "renda_mensal",
             "perfil_investidor",
             "idade",
             "profissao",
             "patrimonio_total",
             "reserva_emergencia_atual",
+            "aceita_risco",
         ):
             value = extracted_data.get(field)
-            if value is not None:
+            if self._validate_field(field, value):
                 user[field] = value
+
+        # Objetivo principal
+        objetivo = extracted_data.get("objetivo_principal")
+        if objetivo is not None:
+            if "objetivo_principal" not in user or not isinstance(user["objetivo_principal"], dict):
+                user["objetivo_principal"] = {"descricao": None, "confirmado": False}
+            user["objetivo_principal"]["descricao"] = objetivo
 
         # Metas
         new_goals = extracted_data.get("metas")
@@ -156,6 +189,11 @@ class DataManager:
                     continue
 
                 key = name.strip().lower()
+
+                # Valida valor_necessario da meta
+                valor = goal.get("valor_necessario")
+                if valor is not None and (not isinstance(valor, (int, float)) or valor <= 0):
+                    goal["valor_necessario"] = None
 
                 if key not in existing_goals:
                     user["metas"].append(goal)

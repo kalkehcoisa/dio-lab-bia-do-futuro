@@ -28,6 +28,7 @@ def render_user_data(show: bool, user: dict):
         )
 
     lines = ["### 📋 Dados do Usuário\n"]
+    print(user)
     for key, value in user.items():
         if key == "metas" and isinstance(value, list):
             lines.append("**Metas:**")
@@ -53,10 +54,10 @@ def render_user_data(show: bool, user: dict):
     )
 
 
-def chat_handler(message, history):
+def chat_handler(message, history, user_state):
     llm_answer = agent.process_message(
         user_message=message,
-        history=history
+        history=history,
     )
     return llm_answer, agent.user.copy()
 
@@ -84,6 +85,7 @@ with gr.Blocks(title="Assessor Financeiro Pessoal") as app:
         textbox=msg,
         fn=chat_handler,
         save_history=True,
+        additional_inputs=[user_state],
         additional_outputs=[user_state],
     )
 

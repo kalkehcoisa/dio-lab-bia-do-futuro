@@ -64,7 +64,12 @@ class LLMManager:
         try:
             json_answer = json.loads(answer)
         except json.JSONDecodeError:
-            raise LLMError(
+            try:
+                response, json_answer = answer.split('\n{')
+                json_answer = json.loads(json_answer)
+                json_answer['resposta'] = response
+            except ValueError:
+                raise LLMError(
                 "Erro ao se comunicar com o servidor. Por favor, aguarde e tente novamente mais tarde."
             )
         # Validação básica da resposta

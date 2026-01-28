@@ -49,12 +49,15 @@ Formato obrigatório:
   "resposta": string,
   "user_message": string,
   "dados_extraidos": {
+    "nome": string | null,
     "renda_mensal": number | null,
     "perfil_investidor": string | null,
     "idade": number | null,
     "profissao": string | null,
     "patrimonio_total": number | null,
     "reserva_emergencia_atual": number | null,
+    "objetivo_principal": string | null,
+    "aceita_risco": boolean | null,
     "metas": [
       {
         "meta": string,
@@ -64,9 +67,19 @@ Formato obrigatório:
     ] | null
   }
 }
+Importante: jamais responda em formato diferente do JSON acima.
 
 Use null quando a informação não estiver clara.
 Não invente valores.
+
+VALIDAÇÃO DE DADOS:
+Retorne null para dados claramente irreais ou inválidos:
+- idade: deve estar entre 0 e 100 anos
+- renda_mensal: deve ser um valor positivo
+- patrimonio_total: deve ser um valor não negativo
+- reserva_emergencia_atual: deve ser um valor não negativo
+- metas.valor_necessario: deve ser um valor positivo
+Se o usuário informar dados fora desses limites, não extraia o valor (use null).
 """
 
 INSTRUCTIONS = 'INFORMAÇÕES DISPONÍVEIS DO USUÁRIO:\n{context}'

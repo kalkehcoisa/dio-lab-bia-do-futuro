@@ -151,8 +151,8 @@ class DataValidator:
         if not isinstance(idade, int):
             return False, "A idade deve ser um número inteiro."
 
-        if idade < 18 or idade > 120:
-            return False, "A idade deve estar entre 18 e 120 anos."
+        if idade < 18 or idade > 100:
+            return False, "A idade deve estar entre 18 e 100 anos."
 
         return True, None
 
